@@ -57,6 +57,7 @@ Dark mode, JetBrains Mono set on both new categories — confirm and screenshot:
 
 - Language `.po` files not touched — the English resourcestrings in `ulng.pas`
   are the fallback; translations regenerate via the existing i18n flow.
-- `src/dcfonttests` recompiles the app into the shared `units/` dir on first
-  build (build options differ slightly from `doublecmd.lpi`); harmless but means
-  a subsequent `doublecmd` build may recompile once.
+- `src/dcfonttests` builds into its own `src/test/lib/` output dir, so it does
+  not pollute the main `units/` cache (an earlier shared-dir setup corrupted the
+  `doublecmd` build cache — fixed). It recompiles the app into its own dir on a
+  clean build; that's the cost of isolation and is acceptable for a test project.
