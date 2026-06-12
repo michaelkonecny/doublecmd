@@ -121,7 +121,7 @@ type
   TPluginType = (ptDSX, ptWCX, ptWDX, ptWFX, ptWLX); //*Important: Keep that order to to fit with procedures LoadXmlConfig/SaveXmlConfig when we save/restore widths of "TfrmTweakPlugin".
   TWcxCfgViewMode = (wcvmByPlugin, wcvmByExtension);
 
-  TDCFont = (dcfMain, dcfEditor, dcfViewer, dcfViewerBook, dcfLog, dcfConsole, dcfPathEdit, dcfSearchResults, dcfFunctionButtons, dcfTreeViewMenu, dcfStatusBar);
+  TDCFont = (dcfMain, dcfEditor, dcfViewer, dcfViewerBook, dcfLog, dcfConsole, dcfPathEdit, dcfSearchResults, dcfFunctionButtons, dcfTreeViewMenu, dcfStatusBar, dcfInput, dcfTabs);
   TDCFontOptions = record
     Usage: string;
     Name: string;
@@ -232,7 +232,11 @@ const
   // 14 -  Move some colors to colors.json
   // 15 -  Move custom columns colors to colors.json
   // 16 -  Move DirectoryHotList to localconfig.xml
-  ConfigVersion = 16;
+  // 17 -  Added Fonts/Input and Fonts/Tabs (absent nodes fall back to defaults; no load branch)
+  ConfigVersion = 17;
+
+  // Font categories whose picker is constrained to fixed-pitch (monospace) fonts.
+  DCMonoFonts = [dcfEditor, dcfViewer, dcfLog, dcfConsole, dcfInput];
 
   COLORS_JSON = 'colors.json';
 
@@ -1980,6 +1984,20 @@ begin
   gFonts[dcfStatusBar].MinValue := 6;
   gFonts[dcfStatusBar].MaxValue := 200;
 
+  gFonts[dcfInput].Name := MonoSpaceFont;
+  gFonts[dcfInput].Size := 12;
+  gFonts[dcfInput].Style := [];
+  gFonts[dcfInput].Quality := fqDefault;
+  gFonts[dcfInput].MinValue := 6;
+  gFonts[dcfInput].MaxValue := 200;
+
+  gFonts[dcfTabs].Name := 'default';
+  gFonts[dcfTabs].Size := 10;
+  gFonts[dcfTabs].Style := [];
+  gFonts[dcfTabs].Quality := fqDefault;
+  gFonts[dcfTabs].MinValue := 6;
+  gFonts[dcfTabs].MaxValue := 200;
+
   { Colors page }
   gUseCursorBorder := False;
   gUseFrameCursor := False;
@@ -2763,6 +2781,8 @@ begin
     gFonts[dcfSearchResults].Usage := rsFontUsageSearchResults;
     gFonts[dcfTreeViewMenu].Usage := rsFontUsageTreeViewMenu;
     gFonts[dcfStatusBar].Usage := rsFontUsageStatusBar;
+    gFonts[dcfInput].Usage := rsFontUsageInput;
+    gFonts[dcfTabs].Usage := rsFontUsageTabs;
 
     { Behaviours page }
     Node := Root.FindNode('Behaviours');
@@ -2878,6 +2898,8 @@ begin
     if LoadedConfigVersion >= 11 then GetDCFont(gConfig.FindNode(Root, 'Fonts/SearchResults'), gFonts[dcfSearchResults]); //Let's ignore possible previous setting for this and keep our default.
     GetDCFont(gConfig.FindNode(Root, 'Fonts/TreeViewMenu'), gFonts[dcfTreeViewMenu]);
     GetDCFont(gConfig.FindNode(Root, 'Fonts/StatusBar'), gFonts[dcfStatusBar]);
+    GetDCFont(gConfig.FindNode(Root, 'Fonts/Input'), gFonts[dcfInput]);
+    GetDCFont(gConfig.FindNode(Root, 'Fonts/Tabs'), gFonts[dcfTabs]);
 
     { Colors page }
     Node := Root.FindNode('Colors');
@@ -3617,6 +3639,8 @@ begin
     SetDCFont(gConfig.FindNode(Root, 'Fonts/SearchResults',True), gFonts[dcfSearchResults]);
     SetDCFont(gConfig.FindNode(Root, 'Fonts/TreeViewMenu', True), gFonts[dcfTreeViewMenu]);
     SetDCFont(gConfig.FindNode(Root, 'Fonts/StatusBar', True), gFonts[dcfStatusBar]);
+    SetDCFont(gConfig.FindNode(Root, 'Fonts/Input', True), gFonts[dcfInput]);
+    SetDCFont(gConfig.FindNode(Root, 'Fonts/Tabs', True), gFonts[dcfTabs]);
 
     { Colors page }
     Node := FindNode(Root, 'Colors', True);

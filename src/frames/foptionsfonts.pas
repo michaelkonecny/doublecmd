@@ -238,12 +238,10 @@ end;
 
 { TfrmOptionsFonts.btnSelFontClick }
 procedure TfrmOptionsFonts.btnSelFontClick(Sender: TObject);
-const
-  cMonoFonts = [dcfEditor, dcfViewer, dcfLog, dcfConsole];
 begin
   begin
     dlgFnt.Font := LocalVisualFontElements[TButton(Sender).Tag].FontEdit.Font;
-    if (TDCFont(TButton(Sender).Tag) in cMonoFonts) then
+    if (TDCFont(TButton(Sender).Tag) in DCMonoFonts) then
       dlgFnt.Options := dlgFnt.Options + [fdFixedPitchOnly, fdNoStyleSel]
     else
       dlgFnt.Options := dlgFnt.Options - [fdFixedPitchOnly, fdNoStyleSel];

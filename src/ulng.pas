@@ -165,6 +165,8 @@ resourcestring
   rsFontUsageSearchResults = 'Search Results Font';
   rsFontUsageTreeViewMenu = 'Tree View Menu Font';
   rsFontUsageStatusBar = 'Status Bar Font';
+  rsFontUsageInput = 'Input Field Font';
+  rsFontUsageTabs = 'Tab Font';
 
   // Tooltip section
   rsOptTooltipConfigureSaveToChange = 'To change file type tooltip configuration, either APPLY or DELETE current editing one';

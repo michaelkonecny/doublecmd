@@ -197,6 +197,8 @@ begin
   FilterText := EmptyStr;
   Finalizing := False;
 
+  FontOptionsToFont(gFonts[dcfInput], edtSearch.Font);
+
   HotMan.Register(Self.edtSearch, 'Quick Search');
 end;
 

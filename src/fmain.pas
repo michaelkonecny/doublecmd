@@ -5581,6 +5581,8 @@ procedure TfrmMain.UpdateWindowView;
   var
     I: Integer;
   begin
+    FontOptionsToFont(gFonts[dcfTabs], NoteBook.Font);
+
     NoteBook.ShowTabs := ((NoteBook.PageCount > 1) or (tb_always_visible in gDirTabOptions)) and gDirectoryTabs;
 
     if tb_show_close_button in gDirTabOptions then
@@ -5837,6 +5839,9 @@ begin
     // Command line
     pnlCmdLine.Visible := gCmdLine;
     pnlCommand.Visible := gCmdLine or gTermWindow;
+
+    // Command line input font
+    FontOptionsToFont(gFonts[dcfInput], edtCommand.Font);
 
     // Align command line and terminal window
     pnlCommand.Top := -Height;

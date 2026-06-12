@@ -650,6 +650,15 @@ begin
   PopulateMainMenu;
   gSpecialDirList.PopulateMenuWithSpecialDir(pmPathToBeRelativeToHelper, mp_PATHHELPER, nil);
   FPluginDispatcher := tfmFilename;
+
+  // Input field font on the editable fields and the preview grid.
+  FontOptionsToFont(gFonts[dcfInput], edFind.Font);
+  FontOptionsToFont(gFonts[dcfInput], edReplace.Font);
+  FontOptionsToFont(gFonts[dcfInput], edPoc.Font);
+  FontOptionsToFont(gFonts[dcfInput], edInterval.Font);
+  FontOptionsToFont(gFonts[dcfInput], StringGrid.Font);
+  // Grow row height so a larger font is not clipped.
+  StringGrid.DefaultRowHeight := StringGrid.Canvas.TextHeight('Wg') + 4;
 end;
 
 { TfrmMultiRename.FormCloseQuery }
