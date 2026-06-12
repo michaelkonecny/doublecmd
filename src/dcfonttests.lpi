@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="12"/>
+    <PathDelim Value="\"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+        <CompatibilityMode Value="True"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <Title Value="dcfonttests"/>
+      <ResourceType Value="res"/>
+    </General>
+    <BuildModes Count="1">
+      <Item1 Name="Default" Default="True"/>
+    </BuildModes>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default">
+          <local>
+            <CommandLineParams Value="--all --format=plain"/>
+          </local>
+        </Mode0>
+      </Modes>
+    </RunParams>
+    <RequiredPackages Count="14">
+      <Item1>
+        <PackageName Value="fpcunitconsolerunner"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="SynUni"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="DateTimeCtrls"/>
+      </Item3>
+      <Item4>
+        <PackageName Value="kascrypt"/>
+      </Item4>
+      <Item5>
+        <PackageName Value="chsdet"/>
+      </Item5>
+      <Item6>
+        <PackageName Value="LazControls"/>
+      </Item6>
+      <Item7>
+        <PackageName Value="GifView"/>
+      </Item7>
+      <Item8>
+        <PackageName Value="VirtualTerminal"/>
+      </Item8>
+      <Item9>
+        <PackageName Value="KASComp"/>
+      </Item9>
+      <Item10>
+        <PackageName Value="LCL"/>
+      </Item10>
+      <Item11>
+        <PackageName Value="SynEdit"/>
+      </Item11>
+      <Item12>
+        <PackageName Value="viewerpackage"/>
+      </Item12>
+      <Item13>
+        <PackageName Value="doublecmd_common"/>
+      </Item13>
+      <Item14>
+        <PackageName Value="Image32"/>
+      </Item14>
+    </RequiredPackages>
+    <Units Count="4">
+      <Unit0>
+        <Filename Value="dcfonttests.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="test\tcuglobsfonts.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="test\tcfontsetup.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="test\tcfontforms.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit3>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="dcfonttests"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(LazarusDir)\ide;$(ProjOutDir);..\sdk;..\units"/>
+      <OtherUnitFiles Value="test;platform;platform\$(SrcOS);platform\$(SrcOS)\$(TargetOS);..\sdk;frames;fileviews;filesources;filesources\filesystem;filesources\multiarchive;filesources\multilist;filesources\searchresult;filesources\tempfilesystem;filesources\vfs;filesources\wcxarchive;filesources\wfxplugin;filesources\winnet;platform\unix\glib;platform\unix\mime;filesources\gio;rpc;rpc\sys\$(SrcOS);rpc\sys;filesources\recyclebin;filesources\gio\trash;filesources\winnet\wsl;filesources\shellfolder;platform\win\winrt;filesources\gio\network;filesources\mounted;filesources\gio\google;filesources\stash"/>
+      <UnitOutputDirectory Value="..\units\$(TargetCPU)-$(TargetOS)-$(LCLWidgetType)"/>
+      <SrcPath Value="$(LazarusDir)\lcl;$(LazarusDir)\lcl\interfaces\$(LCLWidgetType);$(fpcsrcdir)\packages\fcl-base\src"/>
+    </SearchPaths>
+    <Conditionals Value="if (Laz_FullVersion >= 4990000) then
+begin
+  CustomOptions += '-dLCL_VER_499';
+end;"/>
+    <Parsing>
+      <SyntaxOptions>
+        <IncludeAssertionCode Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <Checks>
+        <IOChecks Value="True"/>
+        <RangeChecks Value="True"/>
+        <OverflowChecks Value="True"/>
+      </Checks>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
+    </CodeGeneration>
+    <Other>
+      <OtherDefines Count="1">
+        <Define0 Value="NoCocoaModernForm"/>
+      </OtherDefines>
+    </Other>
+  </CompilerOptions>
+</CONFIG>
