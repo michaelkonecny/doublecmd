@@ -22,16 +22,16 @@ Two display/input surfaces have no configurable font today, and this feature fil
 ## Font categories added
 
 ### `dcfInput` — "Input Field Font"
-Monospace-oriented. Picker uses `fdFixedPitchOnly` (same as Editor/Viewer/Log/Console rows). Default: name = MonoSpaceFont, size = 12, style = none, MinValue 6, MaxValue 200.
+Monospace-oriented. Picker uses `fdFixedPitchOnly` (same as Editor/Viewer/Log/Console rows). Default: name = MonoSpaceFont, size = 9, style = none, MinValue 6, MaxValue 200.
 
 Applied to:
 - MkDir dialog — `cbMkDir` combo (`fmkdir.pas`).
-- Multi-rename tool — `edFind`, `edReplace`, `edPoc`, `edInterval`, and the preview `StringGrid` (`fmultirename.pas`).
+- Multi-rename tool — the text-entry fields and preview, but not the numeric counter fields (`fmultirename.pas`): File Name mask `cbName`, Extension mask `cbExt`, `edFind`, `edReplace`, log-result path `fneRenameLogFileFilename`, and the preview `StringGrid`. The Counter fields `edPoc` (Start Number) and `edInterval` keep the default font.
 - Command line — `edtCommand` bar at bottom of main window (`fmain.pas`).
 - Quick search / filter — `edtSearch` (`frames/fquicksearch.pas`).
 
 ### `dcfTabs` — "Tab Font"
-Display category (not constrained to monospace in the picker, consistent with `dcfMain` / `dcfPathEdit`); the user picks a monospaced font if desired. Default: name = 'default', size = 10, style = none, MinValue 6, MaxValue 200.
+Display category (not constrained to monospace in the picker, consistent with `dcfMain` / `dcfPathEdit`); the user picks a monospaced font if desired. Default: name = 'default', size = 9, style = none, MinValue 6, MaxValue 200.
 
 Applied to:
 - Folder-tab titles — set `Font` on the `TFileViewNotebook` (`TPageControl`) for both panels, where other main-window fonts are applied in `fmain.pas`. One control-level font covers all tab captions.

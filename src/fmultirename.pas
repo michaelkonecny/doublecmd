@@ -593,11 +593,13 @@ procedure TfrmMultiRename.FormCreate({%H-}Sender: TObject);
 var
   HMMultiRename: THMForm;
 begin
-  // Input field font on the editable fields and the preview grid.
+  // Input field font on the text-entry fields and the preview grid; the
+  // numeric Counter fields (Start Number, Interval) keep the default font.
+  FontOptionsToFont(gFonts[dcfInput], cbName.Font);
+  FontOptionsToFont(gFonts[dcfInput], cbExt.Font);
   FontOptionsToFont(gFonts[dcfInput], edFind.Font);
   FontOptionsToFont(gFonts[dcfInput], edReplace.Font);
-  FontOptionsToFont(gFonts[dcfInput], edPoc.Font);
-  FontOptionsToFont(gFonts[dcfInput], edInterval.Font);
+  FontOptionsToFont(gFonts[dcfInput], fneRenameLogFileFilename.Font);
   FontOptionsToFont(gFonts[dcfInput], StringGrid.Font);
   // Grow row height so a larger font is not clipped.
   StringGrid.DefaultRowHeight := StringGrid.Canvas.TextHeight('Wg') + 4;

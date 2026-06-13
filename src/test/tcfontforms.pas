@@ -25,7 +25,8 @@ type
     procedure TestOptionsFontsPage;
     // MkDir combo uses the input font.
     procedure TestMkDir;
-    // Multi-rename edits and preview grid use the input font.
+    // Multi-rename text fields + preview grid use the input font; the
+    // numeric counter fields keep the default font.
     procedure TestMultiRename;
     // Quick search edit uses the input font.
     procedure TestQuickSearch;
@@ -94,11 +95,16 @@ var
 begin
   Form := TfrmMultiRename.Create(nil);
   try
+    // Text-entry fields + preview grid -> input font.
+    AssertEquals('cbName font', cInputFontName, Form.cbName.Font.Name);
+    AssertEquals('cbExt font', cInputFontName, Form.cbExt.Font.Name);
     AssertEquals('edFind font', cInputFontName, Form.edFind.Font.Name);
     AssertEquals('edReplace font', cInputFontName, Form.edReplace.Font.Name);
-    AssertEquals('edPoc font', cInputFontName, Form.edPoc.Font.Name);
-    AssertEquals('edInterval font', cInputFontName, Form.edInterval.Font.Name);
+    AssertEquals('log path font', cInputFontName, Form.fneRenameLogFileFilename.Font.Name);
     AssertEquals('StringGrid font', cInputFontName, Form.StringGrid.Font.Name);
+    // Numeric counter fields keep the default font (not the input font).
+    AssertTrue('edPoc keeps default font', Form.edPoc.Font.Name <> cInputFontName);
+    AssertTrue('edInterval keeps default font', Form.edInterval.Font.Name <> cInputFontName);
   finally
     Form.Free;
   end;

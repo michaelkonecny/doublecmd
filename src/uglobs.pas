@@ -1985,14 +1985,14 @@ begin
   gFonts[dcfStatusBar].MaxValue := 200;
 
   gFonts[dcfInput].Name := MonoSpaceFont;
-  gFonts[dcfInput].Size := 12;
+  gFonts[dcfInput].Size := 9;
   gFonts[dcfInput].Style := [];
   gFonts[dcfInput].Quality := fqDefault;
   gFonts[dcfInput].MinValue := 6;
   gFonts[dcfInput].MaxValue := 200;
 
   gFonts[dcfTabs].Name := 'default';
-  gFonts[dcfTabs].Size := 10;
+  gFonts[dcfTabs].Size := 9;
   gFonts[dcfTabs].Style := [];
   gFonts[dcfTabs].Quality := fqDefault;
   gFonts[dcfTabs].MinValue := 6;
