@@ -33,6 +33,9 @@ type
     // After migrate+save the config is v18 with the flat nodes gone, and a
     // second load reads the nested tree without re-seeding.
     procedure TestMigrateThenReloadStable;
+    // The carried-over quirk: a SearchResults font from a pre-v11 config is
+    // ignored (kept default); from v11+ it migrates.
+    procedure TestSearchResultsVersionGuard;
   end;
 
 implementation
@@ -167,6 +170,25 @@ begin
 
   AssertEquals('Filesystem stable', 'MigMain', gFonts[dcfFilesystem].Name);
   AssertEquals('Editor stable', 'MigEditor', gFonts[dcfEditor].Name);
+end;
+
+procedure TTestFontMigration.TestSearchResultsVersionGuard;
+begin
+  // Pre-v11: the stored SearchResults font is ignored, default kept.
+  ResetConfig;
+  gConfig.SetAttr(gConfig.RootNode, 'ConfigVersion', 10);
+  WriteLegacyFont('Fonts/Main', 'M', 10);
+  WriteLegacyFont('Fonts/SearchResults', 'OldSearch', 20);
+  LoadXmlConfig;
+  AssertTrue('pre-v11 SearchResults ignored', gFonts[dcfSearchResults].Name <> 'OldSearch');
+
+  // v11+: the stored SearchResults font migrates.
+  ResetConfig;
+  gConfig.SetAttr(gConfig.RootNode, 'ConfigVersion', 11);
+  WriteLegacyFont('Fonts/Main', 'M', 10);
+  WriteLegacyFont('Fonts/SearchResults', 'NewSearch', 20);
+  LoadXmlConfig;
+  AssertEquals('v11+ SearchResults migrates', 'NewSearch', gFonts[dcfSearchResults].Name);
 end;
 
 initialization
