@@ -327,9 +327,10 @@ function TfrmOptions.CompareTwoNodeOfConfigurationOptionTree(Node1, Node2: TTree
   // sorts alphabetically after them.
   function PinRank(Node: TTreeNode): Integer;
   const
-    Pinned: array[0..3] of String =
+    Pinned: array[0..4] of String =
       ('TfrmOptionsLanguage', 'TfrmOptionsFilesViewsComplement',
-       'TfrmOptionsFilePanelsColors', 'TfrmOptionsFileTypesColors');
+       'TfrmOptionsDarkMode', 'TfrmOptionsFilePanelsColors',
+       'TfrmOptionsFileTypesColors');
   var
     I: Integer;
     AName: String;
