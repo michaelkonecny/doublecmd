@@ -30,6 +30,9 @@ type
     procedure TestNestedRoundTrip;
     // A v17 config missing some font nodes loads; those slots fall back.
     procedure TestMissingNodeFallback;
+    // After migrate+save the config is v18 with the flat nodes gone, and a
+    // second load reads the nested tree without re-seeding.
+    procedure TestMigrateThenReloadStable;
   end;
 
 implementation
@@ -141,6 +144,29 @@ begin
   AssertEquals('Editor default', MonoSpaceFont, gFonts[dcfEditor].Name);
   // A subcategory with no legacy node falls back to inherit.
   AssertTrue('InlineRename inherits', gFonts[dcfInlineRename].Inherit);
+end;
+
+procedure TTestFontMigration.TestMigrateThenReloadStable;
+begin
+  ResetConfig;
+  gConfig.SetAttr(gConfig.RootNode, 'ConfigVersion', 17);
+  WriteLegacyFont('Fonts/Main', 'MigMain', 13);
+  WriteLegacyFont('Fonts/Editor', 'MigEditor', 15);
+
+  LoadXmlConfig;  // migrate into memory
+  SaveXmlConfig;  // persist nested tree, stamp v18, drop flat nodes
+
+  AssertEquals('stamped v18', 18, gConfig.GetAttr(gConfig.RootNode, 'ConfigVersion', 0));
+  AssertTrue('flat Fonts/Main removed',
+             gConfig.FindNode(gConfig.RootNode, 'Fonts/Main') = nil);
+
+  // Scramble, then reload: must read the nested tree, not re-seed defaults.
+  gFonts[dcfFilesystem].Name := 'scrambled';
+  gFonts[dcfEditor].Name := 'scrambled';
+  LoadXmlConfig;
+
+  AssertEquals('Filesystem stable', 'MigMain', gFonts[dcfFilesystem].Name);
+  AssertEquals('Editor stable', 'MigEditor', gFonts[dcfEditor].Name);
 end;
 
 initialization
