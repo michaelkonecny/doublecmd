@@ -818,6 +818,8 @@ var
 
 function LoadConfig: Boolean;
 function InitGlobs: Boolean;
+procedure CreateGlobs;
+procedure SetDefaultConfigGlobs;
 function LoadGlobs: Boolean;
 procedure SaveGlobs;
 procedure LoadXmlConfig;

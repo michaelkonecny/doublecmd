@@ -8,6 +8,7 @@ uses
   consoletestrunner,
   tcUGlobsFonts,
   tcFontSetup,
+  tcFontMigration,
   tcFontForms;
 
 var

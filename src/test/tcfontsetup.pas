@@ -39,6 +39,9 @@ begin
     gConfig := TXmlConfig.Create(gpCfgDir + 'doublecmd.xml');
   if not Assigned(gSpecialDirList) then
     gSpecialDirList := TSpecialDirList.Create;
+  // Allocate the global lists that SetDefaultConfigGlobs / LoadXmlConfig touch.
+  if not Assigned(gExts) then
+    CreateGlobs;
 
   gFonts[dcfInput].Name := cInputFontName;
   gFonts[dcfInput].Size := cInputFontSize;

@@ -1,7 +1,8 @@
 {
    Double Commander
    -------------------------------------------------------------------------
-   Tier-3 tests: the dcfInput / dcfTabs fonts reach the isolatable forms.
+   Tier-3 tests: the Options > Fonts picker rows and the User-input slot
+   reaching the isolatable forms.
 }
 
 unit tcFontForms;
@@ -21,22 +22,22 @@ type
   protected
     procedure SetUp; override;
   published
-    // Options page surfaces both new rows (label + preview edit) from enum iteration.
-    procedure TestOptionsFontsPage;
-    // MkDir combo uses the input font.
-    procedure TestMkDir;
-    // Multi-rename text fields + preview grid use the input font; the
-    // numeric counter fields keep the default font.
-    procedure TestMultiRename;
-    // Quick search edit uses the input font.
-    procedure TestQuickSearch;
+    // One row per font: category rows have no Inherit checkbox, subcategory
+    // rows do.
+    procedure TestIndentedRows;
+    // An inheriting subcategory's controls are disabled and show the resolved
+    // parent values; unchecking Inherit re-enables them.
+    procedure TestInheritDisablesControls;
+    // MkDir / MultiRename / QuickSearch are driven by the User-input slot;
+    // numeric counters keep the default font.
+    procedure TestUserInputWidgets;
   end;
 
 implementation
 
 uses
-  Controls, Forms, StdCtrls, Grids,
-  uGlobs, uLng, fOptionsFrame, fOptionsFonts, fMkDir, fMultiRename, fQuickSearch,
+  Controls, Forms, StdCtrls, Graphics,
+  uGlobs, fOptionsFrame, fOptionsFonts, fMkDir, fMultiRename, fQuickSearch,
   tcFontSetup;
 
 procedure TTestFontForms.SetUp;
@@ -44,81 +45,98 @@ begin
   EnsureTestGlobals;
 end;
 
-procedure TTestFontForms.TestOptionsFontsPage;
+function MakeFontsFrame(AParent: TForm): TfrmOptionsFonts;
+begin
+  Result := TfrmOptionsFonts.Create(AParent);
+  Result.Init(AParent, nil, [oeifLoad]);
+end;
+
+procedure TTestFontForms.TestIndentedRows;
 var
   ParentForm: TForm;
   Frame: TfrmOptionsFonts;
-  i: Integer;
-  c: TComponent;
-  HasInputLabel, HasTabsLabel, HasInputPreview: Boolean;
+  AFont: TDCFont;
 begin
   ParentForm := TForm.CreateNew(nil);
   try
-    Frame := TfrmOptionsFonts.Create(ParentForm);
-    Frame.Init(ParentForm, nil, [oeifLoad]);
-
-    HasInputLabel := False; HasTabsLabel := False; HasInputPreview := False;
-    for i := 0 to Frame.ComponentCount - 1 do
-    begin
-      c := Frame.Components[i];
-      if (c is TLabel) and (TLabel(c).Caption = rsFontUsageInput) then
-        HasInputLabel := True;
-      if (c is TLabel) and (TLabel(c).Caption = rsFontUsageTabs) then
-        HasTabsLabel := True;
-      if (c is TEdit) and (TEdit(c).Text = cInputFontName) then
-        HasInputPreview := True;
-    end;
-
-    AssertTrue('Input usage label present', HasInputLabel);
-    AssertTrue('Tabs usage label present', HasTabsLabel);
-    AssertTrue('Preview edit shows configured input font name', HasInputPreview);
+    Frame := MakeFontsFrame(ParentForm);
+    for AFont in TDCFont do
+      if IsCategoryRoot(AFont) then
+        AssertTrue('category ' + gFonts[AFont].Usage + ' has no Inherit checkbox',
+                   Frame.VisualFontElements[AFont].InheritCheck = nil)
+      else
+        AssertTrue('subcategory ' + gFonts[AFont].Usage + ' has an Inherit checkbox',
+                   Assigned(Frame.VisualFontElements[AFont].InheritCheck));
   finally
     ParentForm.Free;
   end;
 end;
 
-procedure TTestFontForms.TestMkDir;
-var
-  Form: TfrmMkDir;
-begin
-  Form := TfrmMkDir.Create(nil);
-  try
-    AssertEquals('cbMkDir font', cInputFontName, Form.cbMkDir.Font.Name);
-  finally
-    Form.Free;
-  end;
-end;
-
-procedure TTestFontForms.TestMultiRename;
-var
-  Form: TfrmMultiRename;
-begin
-  Form := TfrmMultiRename.Create(nil);
-  try
-    // Text-entry fields + preview grid -> input font.
-    AssertEquals('cbName font', cInputFontName, Form.cbName.Font.Name);
-    AssertEquals('cbExt font', cInputFontName, Form.cbExt.Font.Name);
-    AssertEquals('edFind font', cInputFontName, Form.edFind.Font.Name);
-    AssertEquals('edReplace font', cInputFontName, Form.edReplace.Font.Name);
-    AssertEquals('log path font', cInputFontName, Form.fneRenameLogFileFilename.Font.Name);
-    AssertEquals('StringGrid font', cInputFontName, Form.StringGrid.Font.Name);
-    // Numeric counter fields keep the default font (not the input font).
-    AssertTrue('edPoc keeps default font', Form.edPoc.Font.Name <> cInputFontName);
-    AssertTrue('edInterval keeps default font', Form.edInterval.Font.Name <> cInputFontName);
-  finally
-    Form.Free;
-  end;
-end;
-
-procedure TTestFontForms.TestQuickSearch;
+procedure TTestFontForms.TestInheritDisablesControls;
 var
   ParentForm: TForm;
-  Frame: TfrmQuickSearch;
+  Frame: TfrmOptionsFonts;
 begin
+  // Parent category carries a recognisable font; the subcategory inherits.
+  gFonts[dcfFilesystem].Name := 'InheritParentFace';
+  gFonts[dcfFilesystem].Size := 21;
+  gFonts[dcfInlineRename].Name := 'ChildOwnFace';
+  gFonts[dcfInlineRename].Size := 8;
+  gFonts[dcfInlineRename].Inherit := True;
+
   ParentForm := TForm.CreateNew(nil);
   try
-    Frame := TfrmQuickSearch.Create(ParentForm);
-    AssertEquals('edtSearch font', cInputFontName, Frame.edtSearch.Font.Name);
+    Frame := MakeFontsFrame(ParentForm);
+    with Frame.VisualFontElements[dcfInlineRename] do
+    begin
+      AssertTrue('Inherit checked', InheritCheck.Checked);
+      AssertFalse('size disabled when inheriting', FontSpinEdit.Enabled);
+      AssertFalse('preview disabled when inheriting', FontEdit.Enabled);
+      AssertEquals('preview shows parent face', 'InheritParentFace', FontEdit.Text);
+      AssertEquals('size shows parent size', 21, FontSpinEdit.Value);
+
+      // Unchecking enables the controls again.
+      InheritCheck.Checked := False;
+      AssertTrue('size enabled after uncheck', FontSpinEdit.Enabled);
+      AssertTrue('preview enabled after uncheck', FontEdit.Enabled);
+    end;
+  finally
+    ParentForm.Free;
+  end;
+end;
+
+procedure TTestFontForms.TestUserInputWidgets;
+var
+  MkDir: TfrmMkDir;
+  MultiRename: TfrmMultiRename;
+  ParentForm: TForm;
+  QuickSearch: TfrmQuickSearch;
+begin
+  MkDir := TfrmMkDir.Create(nil);
+  try
+    AssertEquals('cbMkDir font', cInputFontName, MkDir.cbMkDir.Font.Name);
+  finally
+    MkDir.Free;
+  end;
+
+  MultiRename := TfrmMultiRename.Create(nil);
+  try
+    AssertEquals('cbName font', cInputFontName, MultiRename.cbName.Font.Name);
+    AssertEquals('cbExt font', cInputFontName, MultiRename.cbExt.Font.Name);
+    AssertEquals('edFind font', cInputFontName, MultiRename.edFind.Font.Name);
+    AssertEquals('edReplace font', cInputFontName, MultiRename.edReplace.Font.Name);
+    AssertEquals('log path font', cInputFontName, MultiRename.fneRenameLogFileFilename.Font.Name);
+    AssertEquals('StringGrid font', cInputFontName, MultiRename.StringGrid.Font.Name);
+    AssertTrue('edPoc keeps default font', MultiRename.edPoc.Font.Name <> cInputFontName);
+    AssertTrue('edInterval keeps default font', MultiRename.edInterval.Font.Name <> cInputFontName);
+  finally
+    MultiRename.Free;
+  end;
+
+  ParentForm := TForm.CreateNew(nil);
+  try
+    QuickSearch := TfrmQuickSearch.Create(ParentForm);
+    AssertEquals('edtSearch font', cInputFontName, QuickSearch.edtSearch.Font.Name);
   finally
     ParentForm.Free;
   end;
