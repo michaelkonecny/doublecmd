@@ -1,6 +1,6 @@
 # Font Settings — Spec
 
-Status: draft
+Status: agreed
 Last updated: 2026-06-15
 
 ## Goal
