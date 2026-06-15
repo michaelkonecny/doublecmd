@@ -92,9 +92,9 @@ procedure TBriefDrawGrid.UpdateView;
     Canvas.Font.PixelsPerInch := NewFont.PixelsPerInch;
 
     // Search columns settings for the biggest font (in height).
-    Canvas.Font.Name  := gFonts[dcfMain].Name;
-    Canvas.Font.Style := gFonts[dcfMain].Style;
-    Canvas.Font.Size  := gFonts[dcfMain].Size;
+    Canvas.Font.Name  := gFonts[dcfFilesystem].Name;
+    Canvas.Font.Style := gFonts[dcfFilesystem].Style;
+    Canvas.Font.Size  := gFonts[dcfFilesystem].Size;
 
     CurrentHeight := Canvas.GetTextHeight('Wg');
     MaxFontHeight := Max(MaxFontHeight, CurrentHeight);
@@ -168,10 +168,10 @@ begin
     begin
       J:= 0;
       M:= 0;
-      ARefresh:= (Canvas.Font.Name <> gFonts[dcfMain].Name) or
-                 (Canvas.Font.Size <> gFonts[dcfMain].Size) or
-                 (Canvas.Font.Style <> gFonts[dcfMain].Style);
-      FontOptionsToFont(gFonts[dcfMain], Canvas.Font);
+      ARefresh:= (Canvas.Font.Name <> gFonts[dcfFilesystem].Name) or
+                 (Canvas.Font.Size <> gFonts[dcfFilesystem].Size) or
+                 (Canvas.Font.Style <> gFonts[dcfFilesystem].Style);
+      ApplyFont(dcfFilesystem, Canvas.Font);
       for I:= 0 to FBriefView.FFiles.Count - 1 do
       begin
         AFile:= FBriefView.FFiles[I];
@@ -371,13 +371,6 @@ begin
 
   if not FBriefView.IsLoadingFileList then
   begin
-
-    if gZoomWithCtrlWheel and(Shift=[ssCtrl])and(frmMain.Commands.MainFontZoomOut()) then
-    begin
-      Result:=True;
-      Exit;
-    end;
-
     Result:= inherited DoMouseWheelDown(Shift, MousePos);
     Result:= Perform(LM_HSCROLL, SB_LINERIGHT, 0) = 0;
   end
@@ -390,13 +383,6 @@ begin
 
   if not FBriefView.IsLoadingFileList then
   begin
-
-    if gZoomWithCtrlWheel and(Shift=[ssCtrl])and(frmMain.Commands.MainFontZoomIn()) then
-    begin
-      Result:=True;
-      Exit;
-    end;
-
     Result:= inherited DoMouseWheelUp(Shift, MousePos);
     Result:= Perform(LM_HSCROLL, SB_LINELEFT, 0) = 0;
   end
@@ -555,9 +541,7 @@ procedure TBriefFileView.ShowRenameFileEdit(
 begin
   if not edtRename.Visible then
   begin
-    edtRename.Font.Name  := gFonts[dcfMain].Name;
-    edtRename.Font.Size  := gFonts[dcfMain].Size;
-    edtRename.Font.Style := gFonts[dcfMain].Style;
+    ApplyFont(dcfInlineRename, edtRename.Font);
 
     dgPanel.LeftCol:= dgPanel.Col;
 

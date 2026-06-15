@@ -721,7 +721,7 @@ begin
   cmbNotOlderThanUnit.ItemIndex := 3; // Days
   cmbFileSizeUnit.ItemIndex := 1; // Kilobytes
   cbPartialNameSearch.Checked := gPartialNameSearch;
-  FontOptionsToFont(gFonts[dcfSearchResults], lsFoundedFiles.Font);
+  ApplyFont(dcfSearchResults, lsFoundedFiles.Font);
 
   InitPropStorage(Self);
 
@@ -2671,26 +2671,16 @@ end;
 
 { TfrmFindDlg.lsFoundedFilesMouseWheelDown }
 procedure TfrmFindDlg.lsFoundedFilesMouseWheelDown(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint; var Handled: boolean);
+  Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) and (gFonts[dcfSearchResults].Size > gFonts[dcfSearchResults].MinValue) then
-  begin
-    dec(gFonts[dcfSearchResults].Size);
-    lsFoundedFiles.Font.Size := gFonts[dcfSearchResults].Size;
-    Handled := True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 { TfrmFindDlg.lsFoundedFilesMouseWheelUp }
 procedure TfrmFindDlg.lsFoundedFilesMouseWheelUp(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint; var Handled: boolean);
+  Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) and (gFonts[dcfSearchResults].Size < gFonts[dcfSearchResults].MaxValue) then
-  begin
-    inc(gFonts[dcfSearchResults].Size);
-    lsFoundedFiles.Font.Size := gFonts[dcfSearchResults].Size;
-    Handled := True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 { TfrmFindDlg.miOpenInNewTabClick }

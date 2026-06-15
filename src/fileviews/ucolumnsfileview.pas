@@ -381,13 +381,6 @@ begin
   Handled:= True;
   if not IsLoadingFileList then
   begin
-
-    if gZoomWithCtrlWheel and(Shift=[ssCtrl])and(frmMain.Commands.MainFontZoomIn()) then
-    begin
-      Handled:=True;
-      Exit;
-    end;
-
     case gScrollMode of
       smLineByLine:
         for I:= 1 to gWheelScrollLines do
@@ -408,13 +401,6 @@ begin
   Handled:= True;
   if not IsLoadingFileList then
   begin
-
-    if gZoomWithCtrlWheel and(Shift=[ssCtrl])and(frmMain.Commands.MainFontZoomOut()) then
-    begin
-      Handled:=True;
-      Exit;
-    end;
-
     case gScrollMode of
       smLineByLine:
         for I:= 1 to gWheelScrollLines do
@@ -483,9 +469,7 @@ begin
 
   if not edtRename.Visible then
   begin
-    edtRename.Font.Name  := GetColumnsClass.GetColumnFontName(FFileNameColumn);
-    edtRename.Font.Size  := GetColumnsClass.GetColumnFontSize(FFileNameColumn);
-    edtRename.Font.Style := GetColumnsClass.GetColumnFontStyle(FFileNameColumn);
+    ApplyFont(dcfInlineRename, edtRename.Font);
 
     UpdateRenameFileEditPosition(withExt);
   end;

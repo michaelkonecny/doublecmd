@@ -366,7 +366,7 @@ begin
   LastMousePos.x := -1;
   LastMousePos.y := -1;
   iFinalSelectedIndex := CONST_CANCEL_ACTION;
-  FontOptionsToFont(gFonts[dcfTreeViewMenu], tvMainMenu.Font);
+  ApplyFont(dcfTreeViewMenu, tvMainMenu.Font);
   TreeViewMenuGenericRoutineAndVarHolder := TTreeViewMenuGenericRoutineAndVarHolder.Create;
   UpdateColors;
   tvMainMenu.OnAdvancedCustomDrawItem := @TreeViewMenuGenericRoutineAndVarHolder.TreeViewMenuAdvancedCustomDrawItem;
@@ -673,25 +673,15 @@ end;
 
 { TfrmTreeViewMenu.tvMainMenuMouseWheelDown }
 procedure TfrmTreeViewMenu.tvMainMenuMouseWheelDown(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+  Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) and (gFonts[dcfTreeViewMenu].Size > gFonts[dcfTreeViewMenu].MinValue) then
-  begin
-    dec(gFonts[dcfTreeViewMenu].Size);
-    tvMainMenu.Font.Size := gFonts[dcfTreeViewMenu].Size;
-    Handled := True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 { TfrmTreeViewMenu.tvMainMenuMouseWheelUp }
-procedure TfrmTreeViewMenu.tvMainMenuMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+procedure TfrmTreeViewMenu.tvMainMenuMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) and (gFonts[dcfTreeViewMenu].Size < gFonts[dcfTreeViewMenu].MaxValue) then
-  begin
-    inc(gFonts[dcfTreeViewMenu].Size);
-    tvMainMenu.Font.Size := gFonts[dcfTreeViewMenu].Size;
-    Handled := True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 { TfrmTreeViewMenu.tvMainMenuSelectionChanged }

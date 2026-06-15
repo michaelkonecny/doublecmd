@@ -121,7 +121,21 @@ type
   TPluginType = (ptDSX, ptWCX, ptWDX, ptWFX, ptWLX); //*Important: Keep that order to to fit with procedures LoadXmlConfig/SaveXmlConfig when we save/restore widths of "TfrmTweakPlugin".
   TWcxCfgViewMode = (wcvmByPlugin, wcvmByExtension);
 
-  TDCFont = (dcfMain, dcfEditor, dcfViewer, dcfViewerBook, dcfLog, dcfConsole, dcfPathEdit, dcfSearchResults, dcfFunctionButtons, dcfTreeViewMenu, dcfStatusBar, dcfInput, dcfTabs);
+  // Fonts are organised in a two-level hierarchy by what the text represents.
+  // Category roots hold a concrete font; subcategories either inherit their
+  // category's font or carry an explicit override. Enum order is the picker's
+  // display order: each category root is followed by its subcategories.
+  TDCFont = (
+    // UI / Chrome
+    dcfUIRoot, dcfStatusBar, dcfFunctionButtons, dcfTabs, dcfTreeViewMenu,
+    // Filesystem (file-panel list)
+    dcfFilesystem, dcfPathEdit, dcfInlineRename, dcfSearchResults,
+    // User input (standalone category, no subcategories)
+    dcfInput,
+    // Document (file contents)
+    dcfDocumentRoot, dcfEditor, dcfViewer, dcfViewerBook,
+    // Console (command output)
+    dcfConsoleRoot, dcfLog);
   TDCFontOptions = record
     Usage: string;
     Name: string;
@@ -130,6 +144,7 @@ type
     Quality: TFontQuality;
     MinValue: integer;
     MaxValue: integer;
+    Inherit: Boolean; // subcategory: resolve to parent category when True
   end;
   TDCFontsOptions = array[TDCFont] of TDCFontOptions;
 
@@ -233,10 +248,75 @@ const
   // 15 -  Move custom columns colors to colors.json
   // 16 -  Move DirectoryHotList to localconfig.xml
   // 17 -  Added Fonts/Input and Fonts/Tabs (absent nodes fall back to defaults; no load branch)
-  ConfigVersion = 17;
+  // 18 -  Fonts reorganised into a category/subcategory hierarchy with whole-font
+  //       inherit; old flat Fonts/* nodes migrate into the nested tree once.
+  ConfigVersion = 18;
 
-  // Font categories whose picker is constrained to fixed-pitch (monospace) fonts.
-  DCMonoFonts = [dcfEditor, dcfViewer, dcfLog, dcfConsole, dcfInput];
+  // Font categories (roots). Roots hold a concrete font and never inherit.
+  DCFontCategoryRoots = [dcfUIRoot, dcfFilesystem, dcfInput, dcfDocumentRoot, dcfConsoleRoot];
+
+  // Fonts whose picker is constrained to fixed-pitch (monospace) faces:
+  // Document (+subs), Console (+Log), User input. UI and Filesystem are free.
+  DCMonoFonts = [dcfDocumentRoot, dcfEditor, dcfViewer, dcfViewerBook,
+                 dcfConsoleRoot, dcfLog, dcfInput];
+
+  // Parent category of each font; a root maps to itself (see IsCategoryRoot).
+  DCFontParent: array[TDCFont] of TDCFont = (
+    dcfUIRoot,        // dcfUIRoot
+    dcfUIRoot,        // dcfStatusBar
+    dcfUIRoot,        // dcfFunctionButtons
+    dcfUIRoot,        // dcfTabs
+    dcfUIRoot,        // dcfTreeViewMenu
+    dcfFilesystem,    // dcfFilesystem
+    dcfFilesystem,    // dcfPathEdit
+    dcfFilesystem,    // dcfInlineRename
+    dcfFilesystem,    // dcfSearchResults
+    dcfInput,         // dcfInput
+    dcfDocumentRoot,  // dcfDocumentRoot
+    dcfDocumentRoot,  // dcfEditor
+    dcfDocumentRoot,  // dcfViewer
+    dcfDocumentRoot,  // dcfViewerBook
+    dcfConsoleRoot,   // dcfConsoleRoot
+    dcfConsoleRoot);  // dcfLog
+
+  // Nested config node path for each font (ConfigVersion >= 18 layout).
+  DCFontNodePath: array[TDCFont] of String = (
+    'Fonts/UI',                       // dcfUIRoot
+    'Fonts/UI/StatusBar',             // dcfStatusBar
+    'Fonts/UI/FunctionButtons',       // dcfFunctionButtons
+    'Fonts/UI/Tabs',                  // dcfTabs
+    'Fonts/UI/TreeViewMenu',          // dcfTreeViewMenu
+    'Fonts/Filesystem',               // dcfFilesystem
+    'Fonts/Filesystem/PathEdit',      // dcfPathEdit
+    'Fonts/Filesystem/InlineRename',  // dcfInlineRename
+    'Fonts/Filesystem/SearchResults', // dcfSearchResults
+    'Fonts/Input',                    // dcfInput
+    'Fonts/Document',                 // dcfDocumentRoot
+    'Fonts/Document/Editor',          // dcfEditor
+    'Fonts/Document/Viewer',          // dcfViewer
+    'Fonts/Document/ViewerBook',      // dcfViewerBook
+    'Fonts/Console',                  // dcfConsoleRoot
+    'Fonts/Console/Log');             // dcfLog
+
+  // Legacy flat node migrated into each slot for ConfigVersion < 18.
+  // Empty = genuinely new slot with no legacy source (starts at default/inherit).
+  DCFontLegacyPath: array[TDCFont] of String = (
+    '',                       // dcfUIRoot (new)
+    'Fonts/StatusBar',        // dcfStatusBar
+    'Fonts/FunctionButtons',  // dcfFunctionButtons
+    'Fonts/Tabs',             // dcfTabs
+    'Fonts/TreeViewMenu',     // dcfTreeViewMenu
+    'Fonts/Main',             // dcfFilesystem
+    'Fonts/PathEdit',         // dcfPathEdit
+    '',                       // dcfInlineRename (new)
+    'Fonts/SearchResults',    // dcfSearchResults
+    'Fonts/Input',            // dcfInput
+    '',                       // dcfDocumentRoot (new)
+    'Fonts/Editor',           // dcfEditor
+    'Fonts/Viewer',           // dcfViewer
+    'Fonts/ViewerBook',       // dcfViewerBook
+    'Fonts/Console',          // dcfConsoleRoot
+    'Fonts/Log');             // dcfLog
 
   COLORS_JSON = 'colors.json';
 
@@ -402,7 +482,6 @@ var
   gSpaceMovesDown: Boolean;
   gScrollMode: TScrollMode;
   gWheelScrollLines: Integer;
-  gZoomWithCtrlWheel: Boolean;
   gAlwaysShowTrayIcon: Boolean;
   gMinimizeToTray: Boolean;
   gConfirmQuit: Boolean;
@@ -750,6 +829,16 @@ function InitPropStorage(Owner: TComponent): TIniPropStorageEx;
 
 procedure FontToFontOptions(Font: TFont; var Options: TDCFontOptions);
 procedure FontOptionsToFont(Options: TDCFontOptions; Font: TFont);
+
+{ Font hierarchy }
+// True for a category root (never inherits; always holds a concrete font).
+function IsCategoryRoot(AFont: TDCFont): Boolean;
+// Parent category of a subcategory; a root maps to itself.
+function ParentCategory(AFont: TDCFont): TDCFont;
+// Effective font: parent category's font when an inheriting subcategory, else own.
+function ResolveFont(AFont: TDCFont): TDCFontOptions;
+// Apply the resolved font of AFont onto Font (single apply-time chokepoint).
+procedure ApplyFont(AFont: TDCFont; Font: TFont);
 
 
 function GetKeyTypingAction(ShiftStateEx: TShiftState): TKeyTypingAction;
@@ -1325,11 +1414,6 @@ begin
       AddIfNotExists(VK_C, [ssModifier], 'cm_CopyToClipboard');
       AddIfNotExists(VK_V, [ssModifier], 'cm_PasteFromClipboard');
       AddIfNotExists(VK_X, [ssModifier], 'cm_CutToClipboard');
-
-      {$IFDEF DARWIN}
-      AddIfNotExists(['Cmd+='],[],'cm_MainFontZoomIn');
-      AddIfNotExists(['Cmd+-'],[],'cm_MainFontZoomOut');
-      {$ENDIF}
     end;
 
   HMForm := HotMan.Forms.FindOrCreate('Viewer');
@@ -1649,6 +1733,30 @@ begin
   end;
 end;
 
+function IsCategoryRoot(AFont: TDCFont): Boolean;
+begin
+  Result := AFont in DCFontCategoryRoots;
+end;
+
+function ParentCategory(AFont: TDCFont): TDCFont;
+begin
+  Result := DCFontParent[AFont];
+end;
+
+function ResolveFont(AFont: TDCFont): TDCFontOptions;
+begin
+  // Categories never inherit, so resolution is at most one hop.
+  if (not IsCategoryRoot(AFont)) and gFonts[AFont].Inherit then
+    Result := gFonts[ParentCategory(AFont)]
+  else
+    Result := gFonts[AFont];
+end;
+
+procedure ApplyFont(AFont: TDCFont; Font: TFont);
+begin
+  FontOptionsToFont(ResolveFont(AFont), Font);
+end;
+
 
 procedure OldKeysToNew(ActionEnabled: Boolean; ShiftState: TShiftState; Action: TKeyTypingAction);
 var
@@ -1826,6 +1934,7 @@ procedure SetDefaultConfigGlobs;
 
 var
   iIndexContextMode:integer;
+  AFont: TDCFont;
 
 begin
   { Language page }
@@ -1866,7 +1975,6 @@ begin
   gMouseSelectionIconClick := 0;
   gScrollMode := smLineByLine;
   gWheelScrollLines:= Mouse.WheelScrollLines;
-  gZoomWithCtrlWheel:= {$ifdef DARWIN}False{$else}True{$endif};
   gAutoFillColumns := False;
   gAutoSizeColumn := 1;
   gColumnsLongInStatus := False;
@@ -1907,96 +2015,100 @@ begin
   gResultingFramePositionAfterCompare := rfpacActiveOnLeft;
 
   { Fonts page }
-  gFonts[dcfMain].Name := 'default';
-  gFonts[dcfMain].Size := 10;
-  gFonts[dcfMain].Style := [fsBold];
-  gFonts[dcfMain].Quality := fqDefault;
-  gFonts[dcfMain].MinValue := 6;
-  gFonts[dcfMain].MaxValue := 200;
+  // Everything is an explicit font by default; only Inline rename inherits.
+  for AFont in TDCFont do
+  begin
+    gFonts[AFont].MinValue := 6;
+    gFonts[AFont].MaxValue := 200;
+    gFonts[AFont].Inherit := False;
+  end;
 
-  gFonts[dcfEditor].Name := MonoSpaceFont;
-  gFonts[dcfEditor].Size := 14;
-  gFonts[dcfEditor].Style := [];
-  gFonts[dcfEditor].Quality := fqDefault;
-  gFonts[dcfEditor].MinValue := 6;
-  gFonts[dcfEditor].MaxValue := 200;
-
-  gFonts[dcfViewer].Name := MonoSpaceFont;
-  gFonts[dcfViewer].Size := 14;
-  gFonts[dcfViewer].Style := [];
-  gFonts[dcfViewer].Quality := fqDefault;
-  gFonts[dcfViewer].MinValue := 6;
-  gFonts[dcfViewer].MaxValue := 200;
-
-  gFonts[dcfViewerBook].Name := 'default';
-  gFonts[dcfViewerBook].Size := 16;
-  gFonts[dcfViewerBook].Style := [fsBold];
-  gFonts[dcfViewerBook].Quality := fqDefault;
-  gFonts[dcfViewerBook].MinValue := 6;
-  gFonts[dcfViewerBook].MaxValue := 200;
-
-  gFonts[dcfLog].Name := MonoSpaceFont;
-  gFonts[dcfLog].Size := 12;
-  gFonts[dcfLog].Style := [];
-  gFonts[dcfLog].Quality := fqDefault;
-  gFonts[dcfLog].MinValue := 6;
-  gFonts[dcfLog].MaxValue := 200;
-
-  gFonts[dcfConsole].Name := MonoSpaceFont;
-  gFonts[dcfConsole].Size := 12;
-  gFonts[dcfConsole].Style := [];
-  gFonts[dcfConsole].Quality := fqDefault;
-  gFonts[dcfConsole].MinValue := 6;
-  gFonts[dcfConsole].MaxValue := 200;
-
-  gFonts[dcfPathEdit].Name := 'default';
-  gFonts[dcfPathEdit].Size := 10;
-  gFonts[dcfPathEdit].Style := [];
-  gFonts[dcfPathEdit].Quality := fqDefault;
-  gFonts[dcfPathEdit].MinValue := 6;
-  gFonts[dcfPathEdit].MaxValue := 200;
-
-  gFonts[dcfFunctionButtons].Name := 'default';
-  gFonts[dcfFunctionButtons].Size := 10;
-  gFonts[dcfFunctionButtons].Style := [];
-  gFonts[dcfFunctionButtons].Quality := fqDefault;
-  gFonts[dcfFunctionButtons].MinValue := 6;
-  gFonts[dcfFunctionButtons].MaxValue := 200;
-
-  gFonts[dcfSearchResults].Name := 'default';
-  gFonts[dcfSearchResults].Size := 10;
-  gFonts[dcfSearchResults].Style := [];
-  gFonts[dcfSearchResults].Quality := fqDefault;
-  gFonts[dcfSearchResults].MinValue := 6;
-  gFonts[dcfSearchResults].MaxValue := 200;
-
-  gFonts[dcfTreeViewMenu].Name := 'default';
-  gFonts[dcfTreeViewMenu].Size := 10;
-  gFonts[dcfTreeViewMenu].Style := [];
-  gFonts[dcfTreeViewMenu].Quality := fqDefault;
-  gFonts[dcfTreeViewMenu].MinValue := 6;
-  gFonts[dcfTreeViewMenu].MaxValue := 200;
+  // UI / Chrome category root defaults to the system UI font.
+  gFonts[dcfUIRoot].Name := 'default';
+  gFonts[dcfUIRoot].Size := 0;
+  gFonts[dcfUIRoot].Style := [];
+  gFonts[dcfUIRoot].Quality := fqDefault;
 
   gFonts[dcfStatusBar].Name := 'default';
   gFonts[dcfStatusBar].Size := 0;
   gFonts[dcfStatusBar].Style := [];
   gFonts[dcfStatusBar].Quality := fqDefault;
-  gFonts[dcfStatusBar].MinValue := 6;
-  gFonts[dcfStatusBar].MaxValue := 200;
 
-  gFonts[dcfInput].Name := MonoSpaceFont;
-  gFonts[dcfInput].Size := 9;
-  gFonts[dcfInput].Style := [];
-  gFonts[dcfInput].Quality := fqDefault;
-  gFonts[dcfInput].MinValue := 6;
-  gFonts[dcfInput].MaxValue := 200;
+  gFonts[dcfFunctionButtons].Name := 'default';
+  gFonts[dcfFunctionButtons].Size := 10;
+  gFonts[dcfFunctionButtons].Style := [];
+  gFonts[dcfFunctionButtons].Quality := fqDefault;
 
   gFonts[dcfTabs].Name := 'default';
   gFonts[dcfTabs].Size := 9;
   gFonts[dcfTabs].Style := [];
   gFonts[dcfTabs].Quality := fqDefault;
-  gFonts[dcfTabs].MinValue := 6;
-  gFonts[dcfTabs].MaxValue := 200;
+
+  gFonts[dcfTreeViewMenu].Name := 'default';
+  gFonts[dcfTreeViewMenu].Size := 10;
+  gFonts[dcfTreeViewMenu].Style := [];
+  gFonts[dcfTreeViewMenu].Quality := fqDefault;
+
+  // Filesystem category root (the file-panel list font; formerly "Main").
+  gFonts[dcfFilesystem].Name := 'default';
+  gFonts[dcfFilesystem].Size := 10;
+  gFonts[dcfFilesystem].Style := [fsBold];
+  gFonts[dcfFilesystem].Quality := fqDefault;
+
+  gFonts[dcfPathEdit].Name := 'default';
+  gFonts[dcfPathEdit].Size := 10;
+  gFonts[dcfPathEdit].Style := [];
+  gFonts[dcfPathEdit].Quality := fqDefault;
+
+  // Inline rename has no dedicated legacy font; it inherits Filesystem.
+  // Seed concrete values that mirror Filesystem in case it is un-inherited.
+  gFonts[dcfInlineRename].Name := 'default';
+  gFonts[dcfInlineRename].Size := 10;
+  gFonts[dcfInlineRename].Style := [fsBold];
+  gFonts[dcfInlineRename].Quality := fqDefault;
+  gFonts[dcfInlineRename].Inherit := True;
+
+  gFonts[dcfSearchResults].Name := 'default';
+  gFonts[dcfSearchResults].Size := 10;
+  gFonts[dcfSearchResults].Style := [];
+  gFonts[dcfSearchResults].Quality := fqDefault;
+
+  gFonts[dcfInput].Name := MonoSpaceFont;
+  gFonts[dcfInput].Size := 9;
+  gFonts[dcfInput].Style := [];
+  gFonts[dcfInput].Quality := fqDefault;
+
+  // Document category root defaults to monospace.
+  gFonts[dcfDocumentRoot].Name := MonoSpaceFont;
+  gFonts[dcfDocumentRoot].Size := 14;
+  gFonts[dcfDocumentRoot].Style := [];
+  gFonts[dcfDocumentRoot].Quality := fqDefault;
+
+  gFonts[dcfEditor].Name := MonoSpaceFont;
+  gFonts[dcfEditor].Size := 14;
+  gFonts[dcfEditor].Style := [];
+  gFonts[dcfEditor].Quality := fqDefault;
+
+  gFonts[dcfViewer].Name := MonoSpaceFont;
+  gFonts[dcfViewer].Size := 14;
+  gFonts[dcfViewer].Style := [];
+  gFonts[dcfViewer].Quality := fqDefault;
+
+  gFonts[dcfViewerBook].Name := 'default';
+  gFonts[dcfViewerBook].Size := 16;
+  gFonts[dcfViewerBook].Style := [fsBold];
+  gFonts[dcfViewerBook].Quality := fqDefault;
+
+  // Console category root (formerly "Console").
+  gFonts[dcfConsoleRoot].Name := MonoSpaceFont;
+  gFonts[dcfConsoleRoot].Size := 12;
+  gFonts[dcfConsoleRoot].Style := [];
+  gFonts[dcfConsoleRoot].Quality := fqDefault;
+
+  gFonts[dcfLog].Name := MonoSpaceFont;
+  gFonts[dcfLog].Size := 12;
+  gFonts[dcfLog].Style := [];
+  gFonts[dcfLog].Quality := fqDefault;
 
   { Colors page }
   gUseCursorBorder := False;
@@ -2699,6 +2811,7 @@ procedure LoadXmlConfig;
       gConfig.GetFont(Node, '', FontOptions.Name, FontOptions.Size, Integer(FontOptions.Style), FontQuality,
                                 FontOptions.Name, FontOptions.Size, Integer(FontOptions.Style), FontQuality);
       FontOptions.Quality:= TFontQuality(FontQuality);
+      FontOptions.Inherit:= gConfig.GetValue(Node, 'Inherit', FontOptions.Inherit);
     end;
   end;
   procedure LoadOption(Node: TXmlNode; var Options: TDrivesListButtonOptions; Option: TDrivesListButtonOption; AName: String);
@@ -2722,6 +2835,7 @@ var
   oldQuickSearchMode: TShiftState = [ssCtrl, ssAlt];
   oldQuickFilterMode: TShiftState = [];
   KeyTypingModifier: TKeyTypingModifier;
+  AFont: TDCFont;
 begin
   with gConfig do
   begin
@@ -2770,19 +2884,22 @@ begin
     gSizeDisplayUnits[fsfPersonalizedTera] := rsDefaultPersonalizedAbbrevTera;
 
     { Since language has been loaded, we may now load our font usage name}
-    gFonts[dcfMain].Usage := rsFontUsageMain;
+    gFonts[dcfUIRoot].Usage := rsFontUsageUI;
+    gFonts[dcfStatusBar].Usage := rsFontUsageStatusBar;
+    gFonts[dcfFunctionButtons].Usage := rsFontUsageFunctionButtons;
+    gFonts[dcfTabs].Usage := rsFontUsageTabs;
+    gFonts[dcfTreeViewMenu].Usage := rsFontUsageTreeViewMenu;
+    gFonts[dcfFilesystem].Usage := rsFontUsageFilesystem;
+    gFonts[dcfPathEdit].Usage := rsFontUsagePathEdit;
+    gFonts[dcfInlineRename].Usage := rsFontUsageInlineRename;
+    gFonts[dcfSearchResults].Usage := rsFontUsageSearchResults;
+    gFonts[dcfInput].Usage := rsFontUsageInput;
+    gFonts[dcfDocumentRoot].Usage := rsFontUsageDocument;
     gFonts[dcfEditor].Usage := rsFontUsageEditor;
     gFonts[dcfViewer].Usage := rsFontUsageViewer;
     gFonts[dcfViewerBook].Usage := rsFontUsageViewerBook;
+    gFonts[dcfConsoleRoot].Usage := rsFontUsageConsole;
     gFonts[dcfLog].Usage := rsFontUsageLog;
-    gFonts[dcfConsole].Usage := rsFontUsageConsole;
-    gFonts[dcfPathEdit].Usage := rsFontUsagePathEdit;
-    gFonts[dcfFunctionButtons].Usage := rsFontUsageFunctionButtons;
-    gFonts[dcfSearchResults].Usage := rsFontUsageSearchResults;
-    gFonts[dcfTreeViewMenu].Usage := rsFontUsageTreeViewMenu;
-    gFonts[dcfStatusBar].Usage := rsFontUsageStatusBar;
-    gFonts[dcfInput].Usage := rsFontUsageInput;
-    gFonts[dcfTabs].Usage := rsFontUsageTabs;
 
     { Behaviours page }
     Node := Root.FindNode('Behaviours');
@@ -2852,7 +2969,6 @@ begin
       gMouseSelectionIconClick := GetValue(Node, 'Mouse/Selection/IconClick', gMouseSelectionIconClick);
       gScrollMode := TScrollMode(GetValue(Node, 'Mouse/ScrollMode', Integer(gScrollMode)));
       gWheelScrollLines:= GetValue(Node, 'Mouse/WheelScrollLines', gWheelScrollLines);
-      gZoomWithCtrlWheel:= GetValue(Node, 'Mouse/ZoomWithCtrlWheel', gZoomWithCtrlWheel);
       gAutoFillColumns := GetValue(Node, 'AutoFillColumns', gAutoFillColumns);
       gAutoSizeColumn := GetValue(Node, 'AutoSizeColumn', gAutoSizeColumn);
       gDateTimeFormat := GetValidDateTimeFormat(GetValue(Node, 'DateTimeFormat', gDateTimeFormat), DefaultDateTimeFormat);
@@ -2887,19 +3003,27 @@ begin
 
     { Fonts page }
 
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Main'), gFonts[dcfMain]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Editor'), gFonts[dcfEditor]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Viewer'), gFonts[dcfViewer]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/ViewerBook'), gFonts[dcfViewerBook]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Log'), gFonts[dcfLog]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Console'), gFonts[dcfConsole]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/PathEdit'), gFonts[dcfPathEdit]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/FunctionButtons'), gFonts[dcfFunctionButtons]);
-    if LoadedConfigVersion >= 11 then GetDCFont(gConfig.FindNode(Root, 'Fonts/SearchResults'), gFonts[dcfSearchResults]); //Let's ignore possible previous setting for this and keep our default.
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/TreeViewMenu'), gFonts[dcfTreeViewMenu]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/StatusBar'), gFonts[dcfStatusBar]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Input'), gFonts[dcfInput]);
-    GetDCFont(gConfig.FindNode(Root, 'Fonts/Tabs'), gFonts[dcfTabs]);
+    if LoadedConfigVersion < 18 then
+    begin
+      // One-time migration of the old flat Fonts/* nodes into the hierarchy.
+      // Each migrated slot becomes an explicit override; genuinely new slots
+      // (UI/Document roots, Inline rename) have no legacy node and keep their
+      // defaults (default/inherit). Stale flat nodes are dropped on next save.
+      for AFont in TDCFont do
+      begin
+        if DCFontLegacyPath[AFont] = '' then Continue;
+        // SearchResults before v11 was written but never honoured; keep default.
+        if (AFont = dcfSearchResults) and (LoadedConfigVersion < 11) then Continue;
+        GetDCFont(gConfig.FindNode(Root, DCFontLegacyPath[AFont]), gFonts[AFont]);
+        gFonts[AFont].Inherit := False;
+      end;
+    end
+    else
+    begin
+      // Nested layout (ConfigVersion >= 18).
+      for AFont in TDCFont do
+        GetDCFont(gConfig.FindNode(Root, DCFontNodePath[AFont]), gFonts[AFont]);
+    end;
 
     { Colors page }
     Node := Root.FindNode('Colors');
@@ -3540,12 +3664,16 @@ procedure SaveXmlConfig;
   procedure SetDCFont(Node: TXmlNode; const FontOptions: TDCFontOptions);
   begin
     if Assigned(Node) then
+    begin
       gConfig.SetFont(Node, '', FontOptions.Name, FontOptions.Size, Integer(FontOptions.Style), Integer(FontOptions.Quality));
+      gConfig.SetValue(Node, 'Inherit', FontOptions.Inherit);
+    end;
   end;
 var
   Root, Node, SubNode: TXmlNode;
   KeyTypingModifier: TKeyTypingModifier;
   iIndexContextMode: integer;
+  AFont: TDCFont;
 begin
   with gConfig do
   begin
@@ -3596,7 +3724,6 @@ begin
     SetValue(SubNode, 'Selection/IconClick', gMouseSelectionIconClick);
     SetValue(SubNode, 'ScrollMode', Integer(gScrollMode));
     SetValue(SubNode, 'WheelScrollLines', gWheelScrollLines);
-    SetValue(SubNode, 'ZoomWithCtrlWheel', gZoomWithCtrlWheel);
     SetValue(Node, 'AutoFillColumns', gAutoFillColumns);
     SetValue(Node, 'AutoSizeColumn', gAutoSizeColumn);
     SetValue(Node, 'CustomColumnsChangeAllColumns', gCustomColumnsChangeAllColumns);
@@ -3628,19 +3755,11 @@ begin
     SetValue(SubNode, 'FramePosAfterComp', Integer(gResultingFramePositionAfterCompare));
 
     { Fonts page }
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Main', True), gFonts[dcfMain]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Editor', True), gFonts[dcfEditor]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Viewer', True), gFonts[dcfViewer]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/ViewerBook', True), gFonts[dcfViewerBook]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Log', True), gFonts[dcfLog]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Console', True), gFonts[dcfConsole]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/PathEdit',True), gFonts[dcfPathEdit]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/FunctionButtons',True), gFonts[dcfFunctionButtons]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/SearchResults',True), gFonts[dcfSearchResults]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/TreeViewMenu', True), gFonts[dcfTreeViewMenu]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/StatusBar', True), gFonts[dcfStatusBar]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Input', True), gFonts[dcfInput]);
-    SetDCFont(gConfig.FindNode(Root, 'Fonts/Tabs', True), gFonts[dcfTabs]);
+    // Rewrite the whole nested tree; clearing first drops any stale flat nodes
+    // left by a pre-v18 config that was migrated on load.
+    ClearNode(FindNode(Root, 'Fonts', True));
+    for AFont in TDCFont do
+      SetDCFont(gConfig.FindNode(Root, DCFontNodePath[AFont], True), gFonts[AFont]);
 
     { Colors page }
     Node := FindNode(Root, 'Colors', True);

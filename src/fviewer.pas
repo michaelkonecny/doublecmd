@@ -963,7 +963,7 @@ begin
   if not bQuickView then Menu:= MainMenu;
   FCommands := TFormCommands.Create(Self, actionList);
 
-  FontOptionsToFont(gFonts[dcfMain], memFolder.Font);
+  ApplyFont(dcfFilesystem, memFolder.Font);
   memFolder.Color:= gColors.FilePanel^.BackColor;
 
   actShowCaret.Checked := gShowCaret;
@@ -1946,7 +1946,7 @@ begin
         ColCount:= gColCount;
         Position:= gTextPosition;
       end;
-    FontOptionsToFont(gFonts[dcfViewerBook], ViewerControl.Font);
+    ApplyFont(dcfViewerBook, ViewerControl.Font);
   end
   else begin
     with ViewerControl do
@@ -1955,7 +1955,7 @@ begin
         Font.Color:= clWindowText;
         ColCount:= 1;
       end;
-    FontOptionsToFont(gFonts[dcfViewer], ViewerControl.Font);
+    ApplyFont(dcfViewer, ViewerControl.Font);
   end;
   ActivatePanel(pnlText);
 end;
@@ -2020,7 +2020,7 @@ begin
 
   if miCode.Checked then begin
     ALine:= SynEdit.TopLine;
-    FontOptionsToFont(gFonts[dcfViewer], SynEdit.Font);
+    ApplyFont(dcfViewer, SynEdit.Font);
     SynEdit.TopLine:= ALine;
     SynEdit.Refresh;
   end else begin
@@ -2502,7 +2502,7 @@ begin
   ViewerControl.OnFileOpen:= @FileOpenUAC;
   ViewerControl.OnGuessEncoding:= @DetectEncoding;
 
-  FontOptionsToFont(gFonts[dcfViewer], ViewerControl.Font);
+  ApplyFont(dcfViewer, ViewerControl.Font);
 
   FileList := TStringList.Create;
   FileList.OwnsObjects:= True;
@@ -2909,39 +2909,21 @@ begin
 end;
 
 procedure TfrmViewer.SynEditMouseWheel(Sender: TObject; Shift: TShiftState;
-  WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
-var
-  inc: Integer;
+  WheelDelta: Integer; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if WheelDelta = 0 then
-    Exit;
-
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) then
-  begin
-    if WheelDelta > 0 then
-      inc:= 1
-    else
-      inc:= -1;
-    self.DoZoom( 1, inc );
-  end;
+  // Font/zoom size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 procedure TfrmViewer.ViewerControlMouseWheelDown(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+  Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift=[ssCtrl]) then begin
-    if self.DoZoomOut then
-      Handled:= True;
-  end;
+  // Font/zoom size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 procedure TfrmViewer.ViewerControlMouseWheelUp(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+  Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift=[ssCtrl]) then begin
-    if self.DoZoomIn then
-      Handled:= True;
-  end;
+  // Font/zoom size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 function TfrmViewer.CheckGraphics(const sFileName:String):Boolean;
@@ -3246,7 +3228,7 @@ begin
     SynEdit.TabWidth := gEditorSynEditTabWidth;
     SynEdit.RightEdge := gEditorSynEditRightEdge;
     SynEdit.VisibleSpecialChars:= gEditorSynEditSpecialChars;
-    FontOptionsToFont(gFonts[dcfViewer], SynEdit.Font);
+    ApplyFont(dcfViewer, SynEdit.Font);
     SynEdit.OnKeyDown:= @SynEditKeyDown;
     SynEdit.OnMouseWheel:= @SynEditMouseWheel;
     SynEdit.OnStatusChange:= @SynEditStatusChange;

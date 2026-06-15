@@ -304,9 +304,9 @@ var
     Canvas.Font.PixelsPerInch := NewFont.PixelsPerInch;
 
     // Search columns settings for the biggest font (in height).
-    Canvas.Font.Name  := gFonts[dcfMain].Name;
-    Canvas.Font.Style := gFonts[dcfMain].Style;
-    Canvas.Font.Size  := gFonts[dcfMain].Size;
+    Canvas.Font.Name  := gFonts[dcfFilesystem].Name;
+    Canvas.Font.Style := gFonts[dcfFilesystem].Style;
+    Canvas.Font.Size  := gFonts[dcfFilesystem].Size;
 
     if gUseFrameCursor then
       Result := gThumbSize.cy + Canvas.GetTextHeight('Wg') + gBorderFrameWidth*2 + 4
@@ -781,9 +781,7 @@ procedure TThumbFileView.ShowRenameFileEdit(
 begin
   if not edtRename.Visible then
   begin
-    edtRename.Font.Name  := gFonts[dcfMain].Name;
-    edtRename.Font.Size  := gFonts[dcfMain].Size;
-    edtRename.Font.Style := gFonts[dcfMain].Style;
+    ApplyFont(dcfInlineRename, edtRename.Font);
 
     UpdateRenameFileEditPosition(withExt);
   end;

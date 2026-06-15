@@ -102,9 +102,6 @@ type
    procedure DoActualMarkApplyOnAll(const maoaDispatcher: TMarkApplyOnAllDispatcher; const Params: array of string);
    procedure DoActualMarkUnMark(const Params: array of string; bSelect: boolean);
    procedure DoActualAddToCommandLine(const Params: array of string; sAddedString:string; bAddSpaceAtTheEnd:boolean);
-   procedure DoMainFontZoom( const inc: Integer );
-   function MainFontZoomIn: Boolean;
-   function MainFontZoomOut: Boolean;
 
    //---------------------
 
@@ -267,8 +264,6 @@ type
    procedure cm_DirHotList(const Params: array of string);
    procedure cm_ConfigDirHotList(const {%H-}Params: array of string);
    procedure cm_WorkWithDirectoryHotlist(const Params: array of string);
-   procedure cm_MainFontZoomIn(const {%H-}Params: array of string);
-   procedure cm_MainFontZoomOut(const {%H-}Params: array of string);
    procedure cm_MarkInvert(const Params: array of string);
    procedure cm_MarkMarkAll(const Params: array of string);
    procedure cm_MarkUnmarkAll(const Params: array of string);
@@ -3528,41 +3523,6 @@ begin
   Application.ProcessMessages;
   if Editor.CanFocus then  Editor.SetFocus;
   TfrmOptionsDirectoryHotlist(Editor).SubmitToAddOrConfigToHotDirDlg(WantedAction, WantedSourcePath, WantedTargetPath, WantedIndexToEdit);
-end;
-
-procedure TMainCommands.DoMainFontZoom( const inc: Integer );
-begin
-  gFonts[dcfMain].Size:= gFonts[dcfMain].Size + inc;
-  frmMain.FrameLeft.UpdateView;
-  frmMain.FrameRight.UpdateView;
-end;
-
-function TMainCommands.MainFontZoomIn: Boolean;
-begin
-  if gFonts[dcfMain].Size >= gFonts[dcfMain].MaxValue then
-    Exit( False );
-
-  DoMainFontZoom( 1 );
-  Result:= True;
-end;
-
-function TMainCommands.MainFontZoomOut: Boolean;
-begin
-  if gFonts[dcfMain].Size <= gFonts[dcfMain].MinValue then
-    Exit( False );
-
-  DoMainFontZoom( -1 );
-  Result:= True;
-end;
-
-procedure TMainCommands.cm_MainFontZoomIn(const Params: array of string);
-begin
-  self.MainFontZoomIn;
-end;
-
-procedure TMainCommands.cm_MainFontZoomOut(const Params: array of string);
-begin
-  self.MainFontZoomOut;
 end;
 
 procedure TMainCommands.cm_Search(const Params: array of string);

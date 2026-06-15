@@ -105,7 +105,7 @@ end;
 procedure TfrmCheckSumVerify.FormCreate(Sender: TObject);
 begin
   seCheckSumVerify.FixDefaultKeystrokes;
-  FontOptionsToFont(gFonts[dcfLog], seCheckSumVerify.Font);
+  ApplyFont(dcfLog, seCheckSumVerify.Font);
 end;
 
 procedure TfrmCheckSumVerify.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);

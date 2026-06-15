@@ -83,7 +83,7 @@ end;
 
 procedure TFileViewWithPanels.UpdateStatusBarFont;
 begin
-  FontOptionsToFont(gFonts[dcfStatusBar], lblInfo.Font);
+  ApplyFont(dcfStatusBar, lblInfo.Font);
   lblInfo.Height := lblInfo.Canvas.TextHeight('Wg');
 end;
 

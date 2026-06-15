@@ -139,23 +139,15 @@ begin
 end;
 
 procedure TFileViewHeader.PathLabelMouseWheelUp(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint;var Handled:Boolean);
+  Shift: TShiftState; MousePos: TPoint;var {%H-}Handled:Boolean);
 begin
-  if gZoomWithCtrlWheel and (ssCtrl in Shift) and (gFonts[dcfPathEdit].Size < gFonts[dcfPathEdit].MaxValue) then
-  begin
-    gFonts[dcfPathEdit].Size:= gFonts[dcfPathEdit].Size + 1;
-    frmMain.ForEachView(@EachViewUpdateHeader, nil);
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 procedure TFileViewHeader.PathLabelMouseWheelDown(Sender: TObject;
-  Shift: TShiftState; MousePos: TPoint;var Handled:Boolean);
+  Shift: TShiftState; MousePos: TPoint;var {%H-}Handled:Boolean);
 begin
-  if gZoomWithCtrlWheel and (ssCtrl in Shift) and (gFonts[dcfPathEdit].Size > gFonts[dcfPathEdit].MinValue) then
-  begin
-     gFonts[dcfPathEdit].Size:= gFonts[dcfPathEdit].Size - 1;
-     frmMain.ForEachView(@EachViewUpdateHeader, nil);
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 { TFileViewHeader.PathLabelDblClick }
@@ -382,9 +374,9 @@ end;
 
 procedure TFileViewHeader.UpdateFont;
 begin
-  FontOptionsToFont(gFonts[dcfPathEdit], FAddressLabel.Font);
-  FontOptionsToFont(gFonts[dcfPathEdit], FPathLabel.Font);
-  FontOptionsToFont(gFonts[dcfPathEdit], FPathEdit.Font);
+  ApplyFont(dcfPathEdit, FAddressLabel.Font);
+  ApplyFont(dcfPathEdit, FPathLabel.Font);
+  ApplyFont(dcfPathEdit, FPathEdit.Font);
 end;
 
 procedure TFileViewHeader.ShowPathEdit;

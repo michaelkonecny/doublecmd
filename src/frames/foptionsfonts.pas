@@ -32,10 +32,12 @@ uses
   //DC
   fOptionsFrame, uGlobs;
 type
-  { TVisualFontElements }
-  TVisualFontElements = record
+  { One picker row, one per TDCFont. InheritCheck is nil on category roots. }
+  TVisualFontElement = record
     FontEdit: TEdit;
-    FontSpindEdit: TSpinEdit;
+    FontSpinEdit: TSpinEdit;
+    FontButton: TButton;
+    InheritCheck: TCheckBox;
   end;
 
   { TSpinEdit }
@@ -48,18 +50,20 @@ type
   { TfrmOptionsFonts }
   TfrmOptionsFonts = class(TOptionsEditor)
     dlgFnt: TFontDialog;
-    procedure edtFontExit(Sender: TObject);
-    procedure edtMouseWheelDown(Sender: TObject; Shift: TShiftState; {%H-}MousePos: TPoint; var {%H-}Handled: boolean);
-    procedure edtMouseWheelUp(Sender: TObject; Shift: TShiftState; {%H-}MousePos: TPoint; var {%H-}Handled: boolean);
     procedure edtFontSizeChange(Sender: TObject);
     procedure btnSelFontClick(Sender: TObject);
+    procedure chkInheritChange(Sender: TObject);
   private
-    LocalVisualFontElements: array[0..pred(Length(TDCFontsOptions))] of TVisualFontElements;
+    // Reflect a subcategory's inherit state into its row: when inheriting,
+    // controls are disabled and show the resolved parent-category values.
+    procedure UpdateInheritRow(AFont: TDCFont);
   protected
     procedure Init; override;
     procedure Load; override;
     function Save: TOptionsEditorSaveFlags; override;
   public
+    // Indexed by font so tests and handlers can find a row directly.
+    VisualFontElements: array[TDCFont] of TVisualFontElement;
     class function GetIconIndex: integer; override;
     class function GetTitle: string; override;
   end;
@@ -74,6 +78,9 @@ uses
 
   //DC
   uLng;
+
+const
+  cSubcategoryIndent = 24; // left indent of subcategory rows under their category
 
 { TSpinEdit }
 
@@ -99,9 +106,9 @@ begin
 end;
 
 { TfrmOptionsFonts.Init }
-// We draw manually the whole thing from the gFont array instead of having designed the form at the conception time.
-// This way, we're sure to don't forget a font, for one, and second, if we ever add a font, no modification will be required here, in the configuration section.
-// ...or maybe just if the font has to be monospace.
+// Rows are built from the TDCFont hierarchy rather than designed at conception
+// time, so adding a font needs no change here. Category roots get a plain row;
+// subcategories are indented and carry an Inherit checkbox.
 procedure TfrmOptionsFonts.Init;
 var
   ALabelFont: TLabel;
@@ -109,43 +116,60 @@ var
   APreviousEditFont: TEdit = nil;
   ASpinEditFontSize: TSpinEdit;
   AButtonFont: TButton;
-  iFontIndex: integer;
+  AInheritCheck: TCheckBox;
+  AFont: TDCFont;
+  AIndent: Integer;
 begin
-  for iFontIndex := 0 to pred(Length(TDCFontsOptions)) do
+  for AFont in TDCFont do
   begin
+    AInheritCheck := nil;
+    if IsCategoryRoot(AFont) then AIndent := 0 else AIndent := cSubcategoryIndent;
+
     ALabelFont := TLabel.Create(Self);
     ALabelFont.Parent := Self;
-    ALabelFont.Caption := gFonts[TDCFont(iFontIndex)].Usage;
+    ALabelFont.Caption := gFonts[AFont].Usage;
 
     AEditFont := TEdit.Create(Self);
-    LocalVisualFontElements[iFontIndex].FontEdit := AEditFont;
+    VisualFontElements[AFont].FontEdit := AEditFont;
     AEditFont.Parent := Self;
-    AEditFont.Tag := iFontIndex;
-    AEditFont.OnExit := @edtFontExit;
-    AEditFont.OnMouseWheelDown := @edtMouseWheelDown;
-    AEditFont.OnMouseWheelUp := @edtMouseWheelUp;
+    AEditFont.Tag := Ord(AFont);
+    AEditFont.ReadOnly := True; // the face is chosen through the "..." dialog
     AEditFont.Anchors := [akTop, akLeft, akRight];
     ALabelFont.FocusControl := AEditFont;
 
     ASpinEditFontSize := TSpinEdit.Create(Self);
-    LocalVisualFontElements[iFontIndex].FontSpindEdit := ASpinEditFontSize;
-    ASpinEditFontSize.Tag := iFontIndex;
+    VisualFontElements[AFont].FontSpinEdit := ASpinEditFontSize;
+    ASpinEditFontSize.Tag := Ord(AFont);
     ASpinEditFontSize.Parent := Self;
     ASpinEditFontSize.OnChange := @edtFontSizeChange;
-    ASpinEditFontSize.MinValue := gFonts[TDCFont(iFontIndex)].MinValue;
-    ASpinEditFontSize.MaxValue := gFonts[TDCFont(iFontIndex)].MaxValue;
+    ASpinEditFontSize.MinValue := gFonts[AFont].MinValue;
+    ASpinEditFontSize.MaxValue := gFonts[AFont].MaxValue;
     ASpinEditFontSize.Width := 55;
     ASpinEditFontSize.Anchors := [akTop, akRight];
 
     AButtonFont := TButton.Create(Self);
-    AButtonFont.Tag := iFontIndex;
-    AButtonFont.Parent := Self;;
+    VisualFontElements[AFont].FontButton := AButtonFont;
+    AButtonFont.Tag := Ord(AFont);
+    AButtonFont.Parent := Self;
     AButtonFont.AutoSize := True;
     AButtonFont.Caption := '...';
     AButtonFont.OnClick := @btnSelFontClick;
     AButtonFont.Anchors := [akTop, akRight];
 
+    if not IsCategoryRoot(AFont) then
+    begin
+      AInheritCheck := TCheckBox.Create(Self);
+      VisualFontElements[AFont].InheritCheck := AInheritCheck;
+      AInheritCheck.Parent := Self;
+      AInheritCheck.Tag := Ord(AFont);
+      AInheritCheck.Caption := rsFontInherit;
+      AInheritCheck.OnChange := @chkInheritChange;
+      AInheritCheck.Anchors := [akTop, akLeft];
+    end;
+
+    { Vertical placement: label above its edit row, edit row below the label. }
     ALabelFont.AnchorSideLeft.Control := Self;
+    ALabelFont.BorderSpacing.Left := AIndent;
     if APreviousEditFont <> nil then
     begin
       ALabelFont.AnchorSideTop.Control := APreviousEditFont;
@@ -153,14 +177,24 @@ begin
       ALabelFont.BorderSpacing.Top := 6;
     end
     else
-    begin
       ALabelFont.AnchorSideTop.Control := Self;
-    end;
 
-    AEditFont.AnchorSideLeft.Control := ALabelFont;
     AEditFont.AnchorSideTop.Control := ALabelFont;
     AEditFont.AnchorSideTop.Side := asrBottom;
     AEditFont.AnchorSideRight.Control := ASpinEditFontSize;
+
+    if Assigned(AInheritCheck) then
+    begin
+      // Inherit checkbox sits at the indent; the preview edit follows it.
+      AInheritCheck.AnchorSideLeft.Control := Self;
+      AInheritCheck.BorderSpacing.Left := AIndent;
+      AInheritCheck.AnchorSideTop.Control := AEditFont;
+      AInheritCheck.AnchorSideTop.Side := asrCenter;
+      AEditFont.AnchorSideLeft.Control := AInheritCheck;
+      AEditFont.AnchorSideLeft.Side := asrBottom;
+    end
+    else
+      AEditFont.AnchorSideLeft.Control := ALabelFont;
 
     ASpinEditFontSize.AnchorSideTop.Control := AEditFont;
     ASpinEditFontSize.AnchorSideTop.Side := asrCenter;
@@ -177,82 +211,102 @@ begin
 end;
 
 { TfrmOptionsFonts.Load }
-// The idea here is to take the general font style and apply them to TEdit in the page.
-// User plays with that to set the properties he wants.
-// Then at the end we recuperate the font from the TEdit's and store properties user set back to the general fonts.
 procedure TfrmOptionsFonts.Load;
 var
-  iFontIndex: integer;
+  AFont: TDCFont;
 begin
-  for iFontIndex := 0 to pred(Length(TDCFontsOptions)) do
-  begin
-    LocalVisualFontElements[iFontIndex].FontEdit.Text := gFonts[TDCFont(iFontIndex)].Name;
-    FontOptionsToFont(gFonts[TDCFont(iFontIndex)], LocalVisualFontElements[iFontIndex].FontEdit.Font);
-    LocalVisualFontElements[iFontIndex].FontSpindEdit.HandleNeeded;
-    LocalVisualFontElements[iFontIndex].FontSpindEdit.Value := gFonts[TDCFont(iFontIndex)].Size;
-  end;
+  for AFont in TDCFont do
+    with VisualFontElements[AFont] do
+    begin
+      FontEdit.Text := gFonts[AFont].Name;
+      FontOptionsToFont(gFonts[AFont], FontEdit.Font);
+      FontSpinEdit.HandleNeeded;
+      FontSpinEdit.Value := gFonts[AFont].Size;
+      if Assigned(InheritCheck) then
+        InheritCheck.Checked := gFonts[AFont].Inherit;
+      UpdateInheritRow(AFont);
+    end;
 end;
 
 { TfrmOptionsFonts.Save }
 function TfrmOptionsFonts.Save: TOptionsEditorSaveFlags;
 var
-  iFontIndex: integer;
+  AFont: TDCFont;
 begin
   Result := [];
-  for iFontIndex := 0 to pred(Length(TDCFontsOptions)) do
-    FontToFontOptions(LocalVisualFontElements[iFontIndex].FontEdit.Font, gFonts[TDCFont(iFontIndex)]);
+  for AFont in TDCFont do
+    with VisualFontElements[AFont] do
+    begin
+      // When inheriting, the (disabled) controls already show the parent's
+      // font, so this stores the resolved parent values + the inherit flag,
+      // discarding any earlier explicit override.
+      FontToFontOptions(FontEdit.Font, gFonts[AFont]);
+      gFonts[AFont].Size := FontSpinEdit.Value;
+      if Assigned(InheritCheck) then
+        gFonts[AFont].Inherit := InheritCheck.Checked
+      else
+        gFonts[AFont].Inherit := False;
+    end;
 end;
 
-{ TfrmOptionsFonts.edtFontExit }
-procedure TfrmOptionsFonts.edtFontExit(Sender: TObject);
+{ TfrmOptionsFonts.UpdateInheritRow }
+procedure TfrmOptionsFonts.UpdateInheritRow(AFont: TDCFont);
+var
+  Inheriting: Boolean;
+  CategoryFont: TDCFontOptions;
 begin
-  TEdit(Sender).Font.Name := TEdit(Sender).Text;
-end;
-
-{ TfrmOptionsFonts.edtMouseWheelDown }
-procedure TfrmOptionsFonts.edtMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: boolean);
-begin
-  if gZoomWithCtrlWheel and (ssCtrl in Shift) and (LocalVisualFontElements[TEdit(Sender).Tag].FontSpindEdit.Value > gFonts[TDCFont(TEdit(Sender).Tag)].MinValue) then
+  with VisualFontElements[AFont] do
   begin
-    TEdit(Sender).Font.Size := TEdit(Sender).Font.Size - 1;
-    LocalVisualFontElements[TEdit(Sender).Tag].FontSpindEdit.Value := TEdit(Sender).Font.Size;
-  end;
-end;
-
-{ TfrmOptionsFonts.edtMouseWheelUp }
-procedure TfrmOptionsFonts.edtMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: boolean);
-begin
-  if gZoomWithCtrlWheel and (ssCtrl in Shift) and (LocalVisualFontElements[TEdit(Sender).Tag].FontSpindEdit.Value < gFonts[TDCFont(TEdit(Sender).Tag)].MaxValue) then
-  begin
-    TEdit(Sender).Font.Size := TEdit(Sender).Font.Size + 1;
-    LocalVisualFontElements[TEdit(Sender).Tag].FontSpindEdit.Value := TEdit(Sender).Font.Size;
+    Inheriting := Assigned(InheritCheck) and InheritCheck.Checked;
+    FontEdit.Enabled := not Inheriting;
+    FontSpinEdit.Enabled := not Inheriting;
+    FontButton.Enabled := not Inheriting;
+    if Inheriting then
+    begin
+      // Show the resolved parent-category values; on a later uncheck these
+      // stay as the starting point for an explicit override.
+      CategoryFont := gFonts[ParentCategory(AFont)];
+      FontEdit.Text := CategoryFont.Name;
+      FontOptionsToFont(CategoryFont, FontEdit.Font);
+      FontSpinEdit.Value := CategoryFont.Size;
+    end;
   end;
 end;
 
 { TfrmOptionsFonts.edtFontSizeChange }
 procedure TfrmOptionsFonts.edtFontSizeChange(Sender: TObject);
 begin
-  if (LocalVisualFontElements[TSpinEdit(Sender).Tag].FontEdit.Font.Size <> TSpinEdit(Sender).Value) then
-    LocalVisualFontElements[TSpinEdit(Sender).Tag].FontEdit.Font.Size := TSpinEdit(Sender).Value;
+  with VisualFontElements[TDCFont(TSpinEdit(Sender).Tag)] do
+    if FontEdit.Font.Size <> TSpinEdit(Sender).Value then
+      FontEdit.Font.Size := TSpinEdit(Sender).Value;
+end;
+
+{ TfrmOptionsFonts.chkInheritChange }
+procedure TfrmOptionsFonts.chkInheritChange(Sender: TObject);
+begin
+  UpdateInheritRow(TDCFont(TCheckBox(Sender).Tag));
 end;
 
 { TfrmOptionsFonts.btnSelFontClick }
 procedure TfrmOptionsFonts.btnSelFontClick(Sender: TObject);
+var
+  AFont: TDCFont;
 begin
+  AFont := TDCFont(TButton(Sender).Tag);
+  with VisualFontElements[AFont] do
   begin
-    dlgFnt.Font := LocalVisualFontElements[TButton(Sender).Tag].FontEdit.Font;
-    if (TDCFont(TButton(Sender).Tag) in DCMonoFonts) then
+    dlgFnt.Font := FontEdit.Font;
+    if (AFont in DCMonoFonts) then
       dlgFnt.Options := dlgFnt.Options + [fdFixedPitchOnly, fdNoStyleSel]
     else
       dlgFnt.Options := dlgFnt.Options - [fdFixedPitchOnly, fdNoStyleSel];
     if dlgFnt.Execute then
     begin
-      LocalVisualFontElements[TButton(Sender).Tag].FontEdit.Font := dlgFnt.Font;
-      LocalVisualFontElements[TButton(Sender).Tag].FontEdit.Text := dlgFnt.Font.Name;
-      LocalVisualFontElements[TButton(Sender).Tag].FontSpindEdit.Value := dlgFnt.Font.Size;
+      FontEdit.Font := dlgFnt.Font;
+      FontEdit.Text := dlgFnt.Font.Name;
+      FontSpinEdit.Value := dlgFnt.Font.Size;
     end;
   end;
 end;
 
 end.
-

@@ -154,6 +154,11 @@ resourcestring
   rsOptArchiveConfigureSaveToChange = 'To change current editing archive configuration, either APPLY or DELETE current editing one';
 
   // Font
+  rsFontInherit = 'Inherit';
+  rsFontUsageUI = 'UI / Chrome';
+  rsFontUsageFilesystem = 'Filesystem';
+  rsFontUsageDocument = 'Document';
+  rsFontUsageInlineRename = 'Inline Rename';
   rsFontUsageMain = 'Main &Font';
   rsFontUsageEditor = '&Editor Font';
   rsFontUsageViewer = '&Viewer Font';

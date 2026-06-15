@@ -883,7 +883,7 @@ end;
 procedure TfrmOptionsEditorColors.Init;
 begin
   inherited Init;
-  FontOptionsToFont(gFonts[dcfEditor], ColorPreview.Font);
+  ApplyFont(dcfEditor, ColorPreview.Font);
 end;
 
 procedure TfrmOptionsEditorColors.Done;

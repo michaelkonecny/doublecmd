@@ -78,8 +78,6 @@ type
     actEmptyStash: TAction;
     actRemoveFromStash: TAction;
     actOpenStash: TAction;
-    actMainFontZoomOut: TAction;
-    actMainFontZoomIn: TAction;
     actMapNetworkDrive: TAction;
     actShowTabsList: TAction;
     actSaveFileDetailsToFile: TAction;
@@ -1309,23 +1307,15 @@ begin
 end;
 
 procedure TfrmMain.btnF3MouseWheelDown(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
+  MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (ssCtrl in Shift) and (gFonts[dcfFunctionButtons].Size > gFonts[dcfFunctionButtons].MinValue) then
-  begin
-    Dec(gFonts[dcfFunctionButtons].Size);
-    UpdateGUIFunctionKeys;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 procedure TfrmMain.btnF3MouseWheelUp(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
+  MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (ssCtrl in Shift) and (gFonts[dcfFunctionButtons].Size < gFonts[dcfFunctionButtons].MaxValue) then
-  begin
-    Inc(gFonts[dcfFunctionButtons].Size);
-    UpdateGUIFunctionKeys;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 procedure TfrmMain.btnF8MouseDown(Sender: TObject; Button: TMouseButton;
@@ -5008,7 +4998,7 @@ begin
       ShellTreeView.BackgroundColor := BackColor;
       ShellTreeView.SelectionColor := CursorColor;
     end;
-    FontOptionsToFont(gFonts[dcfMain], ShellTreeView.Font);
+    ApplyFont(dcfFilesystem, ShellTreeView.Font);
   end;
 end;
 
@@ -5496,7 +5486,7 @@ begin
         cmdConsole.Align:= alClient;
         cmdConsole.ShowHint:= False;
       end;
-      FontOptionsToFont(gFonts[dcfConsole], cmdConsole.Font); //We set the font here because if we're coming back from configuration the font in options, we'll later pass here to affect that font if ever displayed.
+      ApplyFont(dcfConsoleRoot, cmdConsole.Font); //We set the font here because if we're coming back from configuration the font in options, we'll later pass here to affect that font if ever displayed.
       if not Assigned(Cons) then
         begin
           Cons:= TPtyDevice.Create(Self);
@@ -5581,7 +5571,7 @@ procedure TfrmMain.UpdateWindowView;
   var
     I: Integer;
   begin
-    FontOptionsToFont(gFonts[dcfTabs], NoteBook.Font);
+    ApplyFont(dcfTabs, NoteBook.Font);
 
     NoteBook.ShowTabs := ((NoteBook.PageCount > 1) or (tb_always_visible in gDirTabOptions)) and gDirectoryTabs;
 
@@ -5834,14 +5824,14 @@ begin
     // Align log window
     seLogWindow.Top := 0;
     LogSplitter.Top := 0;
-    FontOptionsToFont(gFonts[dcfLog], seLogWindow.Font);
+    ApplyFont(dcfLog, seLogWindow.Font);
 
     // Command line
     pnlCmdLine.Visible := gCmdLine;
     pnlCommand.Visible := gCmdLine or gTermWindow;
 
     // Command line input font
-    FontOptionsToFont(gFonts[dcfInput], edtCommand.Font);
+    ApplyFont(dcfInput, edtCommand.Font);
 
     // Align command line and terminal window
     pnlCommand.Top := -Height;
@@ -6828,7 +6818,7 @@ begin
     if pnlKeys.Controls[I] is TSpeedButton then
     begin
       AButton:= TSpeedButton(pnlKeys.Controls[I]);
-      FontOptionsToFont(gFonts[dcfFunctionButtons], AButton.Font);
+      ApplyFont(dcfFunctionButtons, AButton.Font);
       H:= Max(H, AButton.Canvas.TextHeight(AButton.Caption));
     end;
   end;

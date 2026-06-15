@@ -38,9 +38,7 @@ type
     cbMouseMode: TComboBox;
     cbSelectionByMouse: TCheckBox;
     chkCursorNoFollow: TCheckBox;
-    chkZoomWithCtrlWheel: TCheckBox;
     chkMouseSelectionIconClick: TCheckBox;
-    gbZoom: TGroupBox;
     gbScrolling: TGroupBox;
     gbSelection: TGroupBox;
     gbOpenWith: TGroupBox;
@@ -108,8 +106,6 @@ begin
       rbScrollLineByLine.Checked:= True;
   end;
 
-  chkZoomWithCtrlWheel.Checked:= gZoomWithCtrlWheel;
-
   case gMouseSingleClickStart of
     0: rbDoubleClick.Checked:= True;
     1, 5: rbSingleClickBoth.Checked:= True;
@@ -134,8 +130,6 @@ begin
     gScrollMode:= smLineByLine
   else if rbScrollPageByPage.Checked then
     gScrollMode:= smPageByPage;
-
-  gZoomWithCtrlWheel:= chkZoomWithCtrlWheel.Checked;
 
   if rbDoubleClick.Checked then
     gMouseSingleClickStart:= 0

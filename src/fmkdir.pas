@@ -92,7 +92,7 @@ end;
 procedure TfrmMkDir.FormCreate(Sender: TObject);
 begin
   InitPropStorage(Self).IniSection:= ClassName;
-  FontOptionsToFont(gFonts[dcfInput], cbMkDir.Font);
+  ApplyFont(dcfInput, cbMkDir.Font);
 end;
 
 procedure TfrmMkDir.cbExtendedChange(Sender: TObject);

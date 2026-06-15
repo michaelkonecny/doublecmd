@@ -395,7 +395,7 @@ end;
 procedure TfrmEditor.LoadGlobalOptions;
 begin
   Editor.Options:= gEditorSynEditOptions;
-  FontOptionsToFont(gFonts[dcfEditor], Editor.Font);
+  ApplyFont(dcfEditor, Editor.Font);
   Editor.TabWidth := gEditorSynEditTabWidth;
   Editor.RightEdge := gEditorSynEditRightEdge;
   Editor.BlockIndent := gEditorSynEditBlockIndent;
@@ -427,21 +427,15 @@ begin
 end;
 
 procedure TfrmEditor.EditorMouseWheelDown(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
+  MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift=[ssCtrl]) then begin
-    if self.DoZoomOut then
-      Handled:= True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 procedure TfrmEditor.EditorMouseWheelUp(Sender: TObject; Shift: TShiftState;
-  MousePos: TPoint; var Handled: Boolean);
+  MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift=[ssCtrl]) then begin
-    if self.DoZoomIn then
-      Handled:= True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 function TfrmEditor.OpenFile(const aFileName: String): Boolean;
@@ -635,7 +629,7 @@ var
 begin
   t:=Editor.TopLine;
   gFonts[dcfEditor].Size:=gFonts[dcfEditor].Size+inc;
-  FontOptionsToFont(gFonts[dcfEditor], Editor.Font);
+  ApplyFont(dcfEditor, Editor.Font);
   Editor.TopLine:=t;
   Editor.Refresh;
 end;

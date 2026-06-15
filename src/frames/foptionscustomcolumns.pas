@@ -1318,11 +1318,11 @@ end;
 { TfrmOptionsCustomColumns.btnResetFontClick }
 procedure TfrmOptionsCustomColumns.btnResetFontClick(Sender: TObject);
 begin
-  TColPrm(stgColumns.Objects[6, IndexRaw + 1]).FontName := gFonts[dcfMain].Name;
-  TColPrm(stgColumns.Objects[6, IndexRaw + 1]).FontSize := gFonts[dcfMain].Size;
-  TColPrm(stgColumns.Objects[6, IndexRaw + 1]).FontStyle := gFonts[dcfMain].Style;
-  edtFont.Text := gFonts[dcfMain].Name;
-  sneFontSize.Value := gFonts[dcfMain].Size;
+  TColPrm(stgColumns.Objects[6, IndexRaw + 1]).FontName := gFonts[dcfFilesystem].Name;
+  TColPrm(stgColumns.Objects[6, IndexRaw + 1]).FontSize := gFonts[dcfFilesystem].Size;
+  TColPrm(stgColumns.Objects[6, IndexRaw + 1]).FontStyle := gFonts[dcfFilesystem].Style;
+  edtFont.Text := gFonts[dcfFilesystem].Name;
+  sneFontSize.Value := gFonts[dcfFilesystem].Size;
   CustomSomethingChanged(Sender);
 end;
 

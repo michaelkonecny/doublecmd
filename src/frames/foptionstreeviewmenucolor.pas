@@ -299,25 +299,15 @@ begin
 end;
 
 { TfrmOptionsTreeViewMenuColor.TreeViewMenuSampleMouseWheelDown }
-procedure TfrmOptionsTreeViewMenuColor.TreeViewMenuSampleMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+procedure TfrmOptionsTreeViewMenuColor.TreeViewMenuSampleMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) and (TempoFont.Size > TempoFont.MinValue) then
-  begin
-    dec(TempoFont.Size);
-    ApplyTempoFontToVisual;
-    Handled := True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 { TfrmOptionsTreeViewMenuColor.TreeViewMenuSampleMouseWheelUp }
-procedure TfrmOptionsTreeViewMenuColor.TreeViewMenuSampleMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+procedure TfrmOptionsTreeViewMenuColor.TreeViewMenuSampleMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var {%H-}Handled: Boolean);
 begin
-  if gZoomWithCtrlWheel and (Shift = [ssCtrl]) and (TempoFont.Size < TempoFont.MaxValue) then
-  begin
-    inc(TempoFont.Size);
-    ApplyTempoFontToVisual;
-    Handled := True;
-  end;
+  // Font size is changed only via Options > Fonts; no Ctrl+Wheel zoom.
 end;
 
 

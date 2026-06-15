@@ -335,9 +335,9 @@ var
   indx: integer;
 begin
   //Set color
-  ColPrm.FontName := gFonts[dcfMain].Name;
-  ColPrm.FontSize := gFonts[dcfMain].Size;
-  ColPrm.FontStyle := gFonts[dcfMain].Style;
+  ColPrm.FontName := gFonts[dcfFilesystem].Name;
+  ColPrm.FontSize := gFonts[dcfFilesystem].Size;
+  ColPrm.FontStyle := gFonts[dcfFilesystem].Style;
   ColPrm.Overcolor := cbAllowOverColor.Checked;
   ColPrm.UseInvertedSelection := cbbUseInvertedSelection.Checked;
   ColPrm.UseInactiveSelColor := cbbUseInactiveSelColor.Checked;

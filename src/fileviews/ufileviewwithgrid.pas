@@ -403,9 +403,9 @@ var
   IsCursor: Boolean;
   IsCursorInactive: Boolean;
 begin
-  Canvas.Font.Name   := gFonts[dcfMain].Name;
-  Canvas.Font.Size   := gFonts[dcfMain].Size;
-  Canvas.Font.Style  := gFonts[dcfMain].Style;
+  Canvas.Font.Name   := gFonts[dcfFilesystem].Name;
+  Canvas.Font.Size   := gFonts[dcfFilesystem].Size;
+  Canvas.Font.Style  := gFonts[dcfFilesystem].Style;
 
   IsCursor := (gdSelected in aState) and FFileView.Active and (not gUseFrameCursor);
   IsCursorInactive := (gdSelected in aState) and (not FFileView.Active) and (not gUseFrameCursor);

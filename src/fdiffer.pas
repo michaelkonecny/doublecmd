@@ -821,10 +821,10 @@ begin
     SetColors(AddedColor, DeletedColor, ModifiedColor);
   end;
 
-  FontOptionsToFont(gFonts[dcfEditor], SynDiffEditLeft.Font);
-  FontOptionsToFont(gFonts[dcfEditor], SynDiffEditRight.Font);
-  FontOptionsToFont(gFonts[dcfViewer], BinaryViewerLeft.Font);
-  FontOptionsToFont(gFonts[dcfViewer], BinaryViewerRight.Font);
+  ApplyFont(dcfEditor, SynDiffEditLeft.Font);
+  ApplyFont(dcfEditor, SynDiffEditRight.Font);
+  ApplyFont(dcfViewer, BinaryViewerLeft.Font);
+  ApplyFont(dcfViewer, BinaryViewerRight.Font);
 
   // Load settings
   actIgnoreCase.Checked := gDifferIgnoreCase;

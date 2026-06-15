@@ -346,7 +346,7 @@ begin
   if FCustomView and (Index < Flist.Count) then
     Result := TPanelColumn(Flist[Index]).FontName
   else
-    Result := gFonts[dcfMain].Name;
+    Result := gFonts[dcfFilesystem].Name;
 end;
 
 function TPanelColumnsClass.GetColumnFontSize(const Index: Integer): Integer;
@@ -354,7 +354,7 @@ begin
   if FCustomView and (Index < Flist.Count) then
     Result := TPanelColumn(Flist[Index]).FontSize
   else
-    Result := gFonts[dcfMain].Size;
+    Result := gFonts[dcfFilesystem].Size;
 end;
 
 function TPanelColumnsClass.GetColumnFontStyle(const Index: Integer): TFontStyles;
@@ -362,12 +362,12 @@ begin
   if FCustomView and (Index < Flist.Count) then
     Result := TPanelColumn(Flist[Index]).FontStyle
   else
-    Result := gFonts[dcfMain].Style;
+    Result := gFonts[dcfFilesystem].Style;
 end;
 
 function TPanelColumnsClass.GetColumnFontQuality(const Index: Integer): TFontQuality;
 begin
-  Result := gFonts[dcfMain].Quality;
+  Result := gFonts[dcfFilesystem].Quality;
 end;
 
 function TPanelColumnsClass.GetColumnTextColor(const Index: Integer): TColor;
@@ -694,9 +694,9 @@ begin
   AColumn.FuncString  := FuncString;
   AColumn.Width       := Width;
   AColumn.Align       := Align;
-  AColumn.FontName    := gFonts[dcfMain].Name;
-  AColumn.FontSize    := gFonts[dcfMain].Size;
-  AColumn.FontStyle   := gFonts[dcfMain].Style;
+  AColumn.FontName    := gFonts[dcfFilesystem].Name;
+  AColumn.FontSize    := gFonts[dcfFilesystem].Size;
+  AColumn.FontStyle   := gFonts[dcfFilesystem].Style;
   with gColors.FilePanel^ do
   begin
     AColumn.TextColor   := ForeColor;
@@ -931,7 +931,7 @@ begin
         AColumn.Width := MulDiv(AColumn.Width, Screen.PixelsPerInch, APixelsPerInch);
         AColumn.Align := TAlignment(AConfig.GetValue(SubNode, 'Align', Integer(0)));
         AConfig.GetFont(SubNode, 'Font', AColumn.FontName, AColumn.FontSize, Integer(AColumn.FontStyle), Quality,
-                        gFonts[dcfMain].Name, gFonts[dcfMain].Size, Integer(gFonts[dcfMain].Style), Quality);
+                        gFonts[dcfFilesystem].Name, gFonts[dcfFilesystem].Size, Integer(gFonts[dcfFilesystem].Style), Quality);
 
         if (LoadedConfigVersion < JsonConfigVersion) then
         begin
@@ -1663,9 +1663,9 @@ end;
 
 constructor TColPrm.Create;
 begin
-  Self.FontName    := gFonts[dcfMain].Name;
-  Self.FontSize    := gFonts[dcfMain].Size;
-  Self.FontStyle   := gFonts[dcfMain].Style;
+  Self.FontName    := gFonts[dcfFilesystem].Name;
+  Self.FontSize    := gFonts[dcfFilesystem].Size;
+  Self.FontStyle   := gFonts[dcfFilesystem].Style;
   with gColors.FilePanel^ do
   begin
     Self.TextColor   := ForeColor;
