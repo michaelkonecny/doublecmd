@@ -47,6 +47,14 @@ type
     class function GetTitle: String; override;
   end;
 
+  { TOptionsColorsGroup }
+
+  TOptionsColorsGroup = class(TOptionsGroup)
+  public
+    class function GetIconIndex: Integer; override;
+    class function GetTitle: String; override;
+  end;
+
 implementation
 
 uses
@@ -69,6 +77,18 @@ end;
 class function TOptionsToolsGroup.GetTitle: String;
 begin
   Result := rsOptionsEditorTools;
+end;
+
+{ TOptionsColorsGroup }
+
+class function TOptionsColorsGroup.GetIconIndex: Integer;
+begin
+  Result := 4;
+end;
+
+class function TOptionsColorsGroup.GetTitle: String;
+begin
+  Result := rsOptionsEditorColors;
 end;
 
 end.

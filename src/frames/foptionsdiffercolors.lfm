@@ -1,0 +1,102 @@
+inherited frmOptionsDifferColors: TfrmOptionsDifferColors
+  ChildSizing.LeftRightSpacing = 12
+  ChildSizing.TopBottomSpacing = 12
+  ChildSizing.HorizontalSpacing = 8
+  ChildSizing.VerticalSpacing = 8
+  ChildSizing.Layout = cclLeftToRightThenTopToBottom
+  ChildSizing.ControlsPerLine = 2
+  object dbTextMode: TDividerBevel[0]
+    Left = 12
+    Height = 15
+    Top = 12
+    Width = 240
+    Caption = 'Text Mode'
+    ParentFont = False
+    Style = gsHorLines
+  end
+  object DividerBevel4: TDividerBevel[1]
+    Left = 260
+    Height = 15
+    Top = 12
+    Width = 240
+    ParentFont = False
+    Style = gsHorLines
+  end
+  object lblAdded: TLabel[2]
+    Left = 12
+    Height = 25
+    Top = 35
+    Width = 240
+    Caption = 'Added:'
+    Layout = tlCenter
+  end
+  object cbAdded: TKASColorBoxButton[3]
+    Left = 260
+    Height = 25
+    Top = 35
+    Width = 240
+    TabOrder = 0
+  end
+  object lblDeleted: TLabel[4]
+    Left = 12
+    Height = 25
+    Top = 68
+    Width = 240
+    Caption = 'Deleted:'
+    Layout = tlCenter
+  end
+  object cbDeleted: TKASColorBoxButton[5]
+    Left = 260
+    Height = 25
+    Top = 68
+    Width = 240
+    TabOrder = 1
+  end
+  object lblModified: TLabel[6]
+    Left = 12
+    Height = 25
+    Top = 101
+    Width = 240
+    Caption = 'Modified:'
+    Layout = tlCenter
+  end
+  object cbModified: TKASColorBoxButton[7]
+    Left = 260
+    Height = 25
+    Top = 101
+    Width = 240
+    TabOrder = 2
+  end
+  object dbBinaryMode: TDividerBevel[8]
+    Left = 12
+    Height = 15
+    Top = 134
+    Width = 240
+    Caption = 'Binary Mode'
+    ParentFont = False
+    Style = gsHorLines
+  end
+  object DividerBevel6: TDividerBevel[9]
+    Left = 260
+    Height = 15
+    Top = 134
+    Width = 240
+    ParentFont = False
+    Style = gsHorLines
+  end
+  object lblModifiedBinary: TLabel[10]
+    Left = 12
+    Height = 25
+    Top = 157
+    Width = 240
+    Caption = 'Modified:'
+    Layout = tlCenter
+  end
+  object cbModifiedBinary: TKASColorBoxButton[11]
+    Left = 260
+    Height = 25
+    Top = 157
+    Width = 240
+    TabOrder = 3
+  end
+end

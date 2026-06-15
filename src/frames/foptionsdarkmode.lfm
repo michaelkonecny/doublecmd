@@ -1,0 +1,39 @@
+inherited frmOptionsDarkMode: TfrmOptionsDarkMode
+  ChildSizing.LeftRightSpacing = 12
+  object rgDarkMode: TRadioGroup[0]
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    Left = 12
+    Height = 77
+    Top = 6
+    Width = 555
+    Anchors = [akTop, akLeft, akRight]
+    AutoFill = True
+    AutoSize = True
+    Caption = 'State'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    ClientHeight = 57
+    ClientWidth = 551
+    TabOrder = 0
+  end
+  object lblUnsupported: TLabel[1]
+    AnchorSideLeft.Control = rgDarkMode
+    AnchorSideTop.Control = rgDarkMode
+    AnchorSideTop.Side = asrBottom
+    Left = 12
+    Height = 15
+    Top = 89
+    Width = 555
+    BorderSpacing.Top = 6
+    Caption = 'Dark mode is not supported on this system.'
+    Visible = False
+  end
+end

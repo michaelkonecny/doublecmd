@@ -1,0 +1,53 @@
+inherited frmOptionsLogColors: TfrmOptionsLogColors
+  ChildSizing.LeftRightSpacing = 12
+  ChildSizing.TopBottomSpacing = 12
+  ChildSizing.HorizontalSpacing = 8
+  ChildSizing.VerticalSpacing = 8
+  ChildSizing.Layout = cclLeftToRightThenTopToBottom
+  ChildSizing.ControlsPerLine = 2
+  object lblInformation: TLabel[0]
+    Left = 12
+    Height = 25
+    Top = 12
+    Width = 66
+    Caption = 'Information:'
+    Layout = tlCenter
+  end
+  object cbInformation: TKASColorBoxButton[1]
+    Left = 86
+    Height = 25
+    Top = 12
+    Width = 125
+    TabOrder = 0
+  end
+  object lblSuccess: TLabel[2]
+    Left = 12
+    Height = 25
+    Top = 45
+    Width = 66
+    Caption = 'Success:'
+    Layout = tlCenter
+  end
+  object cbSuccess: TKASColorBoxButton[3]
+    Left = 86
+    Height = 25
+    Top = 45
+    Width = 125
+    TabOrder = 1
+  end
+  object lblError: TLabel[4]
+    Left = 12
+    Height = 25
+    Top = 78
+    Width = 66
+    Caption = 'Error:'
+    Layout = tlCenter
+  end
+  object cbError: TKASColorBoxButton[5]
+    Left = 86
+    Height = 25
+    Top = 78
+    Width = 125
+    TabOrder = 2
+  end
+end

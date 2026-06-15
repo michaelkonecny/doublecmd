@@ -1,0 +1,87 @@
+inherited frmOptionsDriveFreeSpaceColors: TfrmOptionsDriveFreeSpaceColors
+  ChildSizing.LeftRightSpacing = 12
+  ChildSizing.TopBottomSpacing = 12
+  ChildSizing.HorizontalSpacing = 8
+  ChildSizing.VerticalSpacing = 8
+  ChildSizing.Layout = cclLeftToRightThenTopToBottom
+  ChildSizing.ControlsPerLine = 2
+  object cbbUseGradientInd: TCheckBox[0]
+    Left = 12
+    Height = 19
+    Top = 12
+    Width = 137
+    BorderSpacing.Top = 6
+    Caption = 'Use &Gradient Indicator'
+    OnChange = cbbUseGradientIndChange
+    TabOrder = 0
+  end
+  object pbxFakeDrive: TPaintBox[1]
+    Tag = 83
+    Left = 157
+    Height = 19
+    Top = 12
+    Width = 125
+    Constraints.MaxHeight = 19
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = pbxFakeDriveClick
+    OnPaint = pbxFakeDrivePaint
+  end
+  object lblIndColor: TLabel[2]
+    Left = 12
+    Height = 25
+    Top = 39
+    Width = 137
+    Caption = '&Indicator Fore Color:'
+    FocusControl = cbIndColor
+    Layout = tlCenter
+    ParentColor = False
+  end
+  object cbIndColor: TKASColorBoxButton[3]
+    Left = 157
+    Height = 25
+    Top = 39
+    Width = 125
+    TabOrder = 1
+    OnChange = cbIndColorChange
+  end
+  object lblIndThresholdColor: TLabel[4]
+    Left = 12
+    Height = 25
+    Top = 72
+    Width = 137
+    BorderSpacing.Right = 4
+    Caption = 'Indicator &Threshold Color:'
+    FocusControl = cbIndThresholdColor
+    Layout = tlCenter
+    ParentColor = False
+  end
+  object cbIndThresholdColor: TKASColorBoxButton[5]
+    Left = 157
+    Height = 25
+    Top = 72
+    Width = 125
+    TabOrder = 2
+    OnChange = cbIndColorChange
+  end
+  object lblIndBackColor: TLabel[6]
+    AnchorSideRight.Side = asrBottom
+    Left = 12
+    Height = 25
+    Top = 105
+    Width = 137
+    Caption = 'In&dicator Back Color:'
+    FocusControl = cbIndBackColor
+    Layout = tlCenter
+    ParentColor = False
+  end
+  object cbIndBackColor: TKASColorBoxButton[7]
+    AnchorSideRight.Side = asrBottom
+    Left = 157
+    Height = 25
+    Top = 105
+    Width = 125
+    TabOrder = 3
+    OnChange = cbIndColorChange
+  end
+end

@@ -839,6 +839,7 @@ resourcestring
   //-------------------------------
   rsDarkMode = 'Dark mode';
   rsDarkModeOptions = 'Auto;Enabled;Disabled';
+  rsDarkModeUnsupported = 'Dark mode is not supported on this system.';
   //-------------------------------
   rsDriveFreeSpaceIndicator = 'Drive Free Space Indicator';
   //-------------------------------
