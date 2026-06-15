@@ -28,6 +28,9 @@ type
     // An inheriting subcategory's controls are disabled and show the resolved
     // parent values; unchecking Inherit re-enables them.
     procedure TestInheritDisablesControls;
+    // Re-checking Inherit on an explicit subcategory discards the override on
+    // save; the stored font re-derives from the parent category.
+    procedure TestReInheritDiscardsOverride;
     // MkDir / MultiRename / QuickSearch are driven by the User-input slot;
     // numeric counters keep the default font.
     procedure TestUserInputWidgets;
@@ -100,6 +103,38 @@ begin
       AssertTrue('size enabled after uncheck', FontSpinEdit.Enabled);
       AssertTrue('preview enabled after uncheck', FontEdit.Enabled);
     end;
+  finally
+    ParentForm.Free;
+  end;
+end;
+
+procedure TTestFontForms.TestReInheritDiscardsOverride;
+var
+  ParentForm: TForm;
+  Frame: TfrmOptionsFonts;
+begin
+  gFonts[dcfFilesystem].Name := 'ParentFaceX';
+  gFonts[dcfFilesystem].Size := 19;
+  gFonts[dcfFilesystem].Style := [];
+  gFonts[dcfFilesystem].Quality := fqDefault;
+  gFonts[dcfFilesystem].Inherit := False;
+
+  // Start as an explicit override that differs from the parent.
+  gFonts[dcfInlineRename].Name := 'ChildOverride';
+  gFonts[dcfInlineRename].Size := 7;
+  gFonts[dcfInlineRename].Inherit := False;
+
+  ParentForm := TForm.CreateNew(nil);
+  try
+    Frame := MakeFontsFrame(ParentForm);
+    // User re-checks Inherit, then saves.
+    Frame.VisualFontElements[dcfInlineRename].InheritCheck.Checked := True;
+    Frame.SaveSettings;
+
+    AssertTrue('saved as inheriting', gFonts[dcfInlineRename].Inherit);
+    AssertEquals('override discarded -> parent name', 'ParentFaceX', gFonts[dcfInlineRename].Name);
+    AssertEquals('override discarded -> parent size', 19, gFonts[dcfInlineRename].Size);
+    AssertEquals('resolves to parent', 'ParentFaceX', ResolveFont(dcfInlineRename).Name);
   finally
     ParentForm.Free;
   end;
