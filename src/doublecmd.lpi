@@ -1994,14 +1994,6 @@ end;"/>
         <HasResources Value="True"/>
         <UnitName Value="fElevation"/>
       </Unit265>
-      <Unit266>
-        <Filename Value="frames\foptionscolors.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="frmOptionsColors"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="fOptionsColors"/>
-      </Unit266>
       <Unit267>
         <Filename Value="filesources\gio\trash\utrashfilesource.pas"/>
         <IsPartOfProject Value="True"/>

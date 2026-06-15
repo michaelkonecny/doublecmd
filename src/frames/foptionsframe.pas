@@ -189,7 +189,14 @@ uses
   fOptionsFileAssocExtra,
   fOptionsDirectoryHotlist,
   fOptionsDirectoryHotlistExtra,
-  fOptionsColors
+  fOptionsViewerColors,
+  fOptionsDifferColors,
+  fOptionsLogColors,
+  fOptionsSyncDirsColors,
+{$IF DEFINED(DARKWIN)}
+  fOptionsDarkMode,
+{$ENDIF}
+  fOptionsDriveFreeSpaceColors
   ;
 
 { TOptionsEditorRec }
@@ -374,9 +381,17 @@ begin
   Tools.Add(TfrmOptionsDiffer);
   Tools.Add(TfrmOptionsTerminal);
   Main.Add(TfrmOptionsFonts);
-  Colors := Main.Add(TfrmOptionsColors);
+  Colors := Main.Add(TOptionsColorsGroup);
   Colors.Add(TfrmOptionsFilePanelsColors);
   Colors.Add(TfrmOptionsFileTypesColors);
+  Colors.Add(TfrmOptionsViewerColors);
+  Colors.Add(TfrmOptionsDifferColors);
+  Colors.Add(TfrmOptionsLogColors);
+  Colors.Add(TfrmOptionsSyncDirsColors);
+  Colors.Add(TfrmOptionsDriveFreeSpaceColors);
+{$IF DEFINED(DARKWIN)}
+  Colors.Add(TfrmOptionsDarkMode);
+{$ENDIF}
   Keyboard := Main.Add(TfrmOptionsKeyboard);
   Keyboard.Add(TfrmOptionsHotkeys);
   Mouse := Main.Add(TfrmOptionsMouse);
