@@ -37,3 +37,6 @@ lib/
 
 # Build log artifact
 build_log.txt
+
+# Ephemeral implementation plans (spec-driven workflow)
+specs/**/plan.md
