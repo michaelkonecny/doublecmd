@@ -323,6 +323,24 @@ begin
 end;
 
 function TfrmOptions.CompareTwoNodeOfConfigurationOptionTree(Node1, Node2: TTreeNode): integer;
+  // Nodes pinned to the top of their level, in this order; everything else
+  // sorts alphabetically after them.
+  function PinRank(Node: TTreeNode): Integer;
+  const
+    Pinned: array[0..3] of String =
+      ('TfrmOptionsLanguage', 'TfrmOptionsFilesViewsComplement',
+       'TfrmOptionsFilePanelsColors', 'TfrmOptionsFileTypesColors');
+  var
+    I: Integer;
+    AName: String;
+  begin
+    AName:= TOptionsEditorView(Node.Data).EditorClass.ClassName;
+    for I:= Low(Pinned) to High(Pinned) do
+      if AName = Pinned[I] then Exit(I);
+    Result:= High(Pinned) + 1;
+  end;
+var
+  Rank1, Rank2: Integer;
 begin
   case gSortOrderOfConfigurationOptionsTree of
     scoClassicLegacy:
@@ -332,13 +350,12 @@ begin
 
     scoAlphabeticalButLanguage:
       begin
-        if (TOptionsEditorView(Node1.Data).EditorClass.ClassName='TfrmOptionsLanguage') or (TOptionsEditorView(Node1.Data).EditorClass.ClassName='TfrmOptionsFilesViewsComplement') then
-          result:=-1
+        Rank1:= PinRank(Node1);
+        Rank2:= PinRank(Node2);
+        if Rank1 <> Rank2 then
+          result:= Rank1 - Rank2
         else
-          if (TOptionsEditorView(Node2.Data).EditorClass.ClassName='TfrmOptionsLanguage') or (TOptionsEditorView(Node1.Data).EditorClass.ClassName='TfrmOptionsFilesViewsComplement') then
-            result:=1
-          else
-            result:=CompareStrings(Node1.Text, Node2.Text, gSortNatural, gSortSpecial, gSortCaseSensitivity)
+          result:= CompareStrings(Node1.Text, Node2.Text, gSortNatural, gSortSpecial, gSortCaseSensitivity);
       end;
   end;
 end;
