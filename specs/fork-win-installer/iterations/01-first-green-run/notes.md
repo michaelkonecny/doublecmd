@@ -78,6 +78,23 @@ all of them were present in the local clone — and `master` was pushed back to 
 Lesson: verify remote state with `git ls-remote --heads`, not with local remote-tracking refs. Local
 refs can describe a remote that has since changed.
 
+## Verification
+
+Build path — run `30383476379`, green end to end.
+- Artifact `doublecmd-win64-r13118-d7930a68`, 11.7 MB, expiry 90 days out.
+- Contents: `doublecmd-1.3.0.r13118.x86_64-win64.exe` (12,277,103 bytes) and `changelog.txt`.
+- The `.exe` is a real PE carrying an Inno Setup payload, with `Double Commander`, `1.3.0` and
+  `Alexander Koblov` present as UTF-16 strings. Revision and short SHA both match `master`.
+- Not installed locally: silent installation would leave uninstall registry entries and Start Menu
+  icons on the developer's machine. Signature and string checks were judged sufficient.
+
+Skip path — run `30384672030`, dispatched without `force` after a successful build of the same SHA.
+- `Cache hit for: fork-win-installer-d7930a682e…`, condition evaluated as `[ "true" = "true" ] &&
+  [ "false" != "true" ]`, summary line written, `build` job reported `skipped`.
+
+Cron trigger — not yet exercised. Every run so far was a manual dispatch; the schedule has never
+actually fired. Pending.
+
 ## AFK log
 
 Autonomous decisions taken while the user was away, newest last.
@@ -85,3 +102,11 @@ Autonomous decisions taken while the user was away, newest last.
 - 19:36 — Chose this file as the decision log, under `iterations/01-first-green-run/`, matching the
   layout the spec skill documents. Alternative was an ad-hoc log outside the repo; rejected as less
   discoverable.
+- 19:39 — Declined to run the built installer on the developer's machine to verify it, unattended.
+  See Verification for what was checked instead.
+- 19:47 — Chose `enableCrossOsArchive` over moving `check` to Windows or replacing the cache with an
+  artifact-existence query. See the cross-OS finding for the reasoning.
+- 19:52 — Left the spec at `Status: draft`. Only the user approves a spec; the design is verified but
+  approval is not mine to grant.
+- 19:53 — Decided to stay up past the stated window for the 20:00Z cron tick, since the production
+  trigger is the one thing manual dispatches cannot exercise.
