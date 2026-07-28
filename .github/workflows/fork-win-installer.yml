@@ -1,0 +1,154 @@
+name: fork-win-installer
+
+# Fork-only CI. This file lives ONLY on the orphan branch `fork-ci`, which is the
+# default branch of this fork, so `master` stays free of fork-specific changes and
+# every PR to doublecmd/doublecmd shows only real source changes.
+#
+# Scheduled workflows run exclusively from the default branch, which is why this is
+# cron-driven rather than `on: push` — a push trigger would require the file to sit
+# on `master`.
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Build even when master has not changed
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-win-installer
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.head.outputs.sha }}
+      short: ${{ steps.head.outputs.short }}
+      build: ${{ steps.decide.outputs.build }}
+    steps:
+    - name: Read the head of master
+      id: head
+      run: |
+        sha=$(git ls-remote "https://github.com/${{ github.repository }}" refs/heads/master | cut -f1)
+        test -n "$sha"
+        echo "sha=$sha" >> "$GITHUB_OUTPUT"
+        echo "short=${sha:0:8}" >> "$GITHUB_OUTPUT"
+
+    - name: Look for an earlier build of that commit
+      id: cache
+      uses: actions/cache/restore@v4
+      with:
+        path: built.txt
+        key: fork-win-installer-${{ steps.head.outputs.sha }}
+        lookup-only: true
+
+    - name: Decide whether to build
+      id: decide
+      run: |
+        if [ "${{ steps.cache.outputs.cache-hit }}" = "true" ] && [ "${{ inputs.force }}" != "true" ]; then
+          echo "build=false" >> "$GITHUB_OUTPUT"
+          echo "master @ ${{ steps.head.outputs.short }} is already built - skipping." >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "build=true" >> "$GITHUB_OUTPUT"
+        fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.build == 'true'
+    runs-on: windows-latest
+    steps:
+    - name: Install Lazarus
+      uses: doublecmd/lazarus-install@win
+      with:
+        lazarus-version: "stable"
+
+    - name: Checkout master
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ needs.check.outputs.sha }}
+        fetch-depth: 0
+
+    - name: Restore timestamps
+      uses: chetan/git-restore-mtime-action@v2
+
+    - name: Get libraries
+      shell: cmd
+      run: |
+        cd install
+        curl -fL -o windows.7z https://github.com/doublecmd/external/raw/main/windows.7z
+        if errorlevel 1 exit /b 1
+        "%ProgramFiles%\7-Zip\7z.exe" x windows.7z
+        if errorlevel 1 exit /b 1
+        del /Q windows.7z
+
+    - name: Build Double Commander (x86_64)
+      shell: cmd
+      run: |
+        set CPU_TARGET=x86_64
+        set OS_TARGET=win64
+        rem Read version number
+        for /f tokens^=2delims^=^" %%a in ('findstr "MajorVersionNr" src\doublecmd.lpi') do (set DC_MAJOR=%%a)
+        for /f tokens^=2delims^=^" %%a in ('findstr "MinorVersionNr" src\doublecmd.lpi') do (set DC_MINOR=%%a)
+        for /f tokens^=2delims^=^" %%a in ('findstr "RevisionNr" src\doublecmd.lpi') do (set DC_MICRO=%%a)
+        if [%DC_MINOR%] == [] set DC_MINOR=0
+        if [%DC_MICRO%] == [] set DC_MICRO=0
+        rem Get revision number
+        call src\platform\git2revisioninc.exe.cmd %CD%
+        if not defined REVISION exit /b 1
+        rem Redirection comes first: "echo X=%VAR%>>file" would eat a trailing digit as a handle
+        >>%GITHUB_ENV% echo DC_VER=%DC_MAJOR%.%DC_MINOR%.%DC_MICRO%
+        >>%GITHUB_ENV% echo REVISION=%REVISION%
+        call build.bat darkwin
+        if not exist doublecmd.exe exit /b 1
+        rem Copy libraries next to the binary, where install.bat picks them up
+        copy install\windows\lib\%CPU_TARGET%\*.dll .
+        copy install\windows\lib\%CPU_TARGET%\winpty-agent.exe .
+        if exist install\windows\lib\%CPU_TARGET%\*.sfx copy install\windows\lib\%CPU_TARGET%\*.sfx .
+
+    - name: Build the installer
+      shell: cmd
+      run: |
+        set ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe
+        rem Preinstalled on windows-2022, absent on windows-2025
+        if not exist "%ISCC%" choco install innosetup -y --no-progress
+        if not exist "%ISCC%" exit /b 1
+        rem install.bat fills %BUILD_PACK_DIR%\doublecmd, which is what doublecmd.iss packs
+        set BUILD_PACK_DIR=%RUNNER_TEMP%\pack
+        mkdir %BUILD_PACK_DIR%
+        call install\windows\install.bat
+        if not exist %BUILD_PACK_DIR%\doublecmd\doublecmd.exe exit /b 1
+        copy install\windows\doublecmd.iss %BUILD_PACK_DIR%\
+        mkdir %BUILD_PACK_DIR%\release
+        mkdir %GITHUB_WORKSPACE%\out
+        git log -n 10 --format="%%h %%al %%ai%%n%%s%%n" > %GITHUB_WORKSPACE%\out\changelog.txt
+        cd /D %BUILD_PACK_DIR%
+        "%ISCC%" /F"doublecmd-%DC_VER%.r%REVISION%.x86_64-win64" /DDisplayVersion=%DC_VER% doublecmd.iss
+        if errorlevel 1 exit /b 1
+        move release\*.exe %GITHUB_WORKSPACE%\out\
+        if errorlevel 1 exit /b 1
+
+    - name: Upload the installer
+      uses: actions/upload-artifact@v7
+      with:
+        name: doublecmd-win64-r${{ env.REVISION }}-${{ needs.check.outputs.short }}
+        retention-days: 90
+        compression-level: 0
+        path: out/*
+
+    - name: Record the commit as built
+      run: echo "${{ needs.check.outputs.sha }}" > built.txt
+      shell: bash
+
+    - name: Save the build marker
+      uses: actions/cache/save@v4
+      continue-on-error: true
+      with:
+        path: built.txt
+        key: fork-win-installer-${{ needs.check.outputs.sha }}
