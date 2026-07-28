@@ -51,6 +51,9 @@ jobs:
         path: built.txt
         key: fork-win-installer-${{ steps.head.outputs.sha }}
         lookup-only: true
+        # The marker is written by the Windows build job and read here on Linux.
+        # Caches are not shared across operating systems without this, on both ends.
+        enableCrossOsArchive: true
 
     - name: Decide whether to build
       id: decide
@@ -175,3 +178,4 @@ jobs:
       with:
         path: built.txt
         key: fork-win-installer-${{ needs.check.outputs.sha }}
+        enableCrossOsArchive: true

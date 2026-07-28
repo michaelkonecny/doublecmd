@@ -38,6 +38,7 @@ Cost accepted: up to ~2 h latency between a `master` push and its installer, plu
 - `schedule`: every 2 hours.
 - `workflow_dispatch`: manual, with a boolean `force` input that bypasses deduplication.
 - Deduplication: a `check` job resolves the current head of `master` via `git ls-remote` (no clone) and looks up an `actions/cache` entry keyed on that SHA. Cache hit and not forced → no build. The `build` job saves the marker on success, so only successful builds suppress later runs.
+- The marker crosses operating systems — written by the Windows build job, read by the Linux check job — so both the save and the restore set `enableCrossOsArchive: true`. Without it on both ends the key matches exactly and still misses, silently rebuilding every tick.
 - Cache eviction (7 days untouched) causes at most a redundant rebuild — acceptable.
 - `concurrency` group is fixed, `cancel-in-progress: false`: a running build finishes rather than being killed by the next tick.
 
@@ -78,7 +79,7 @@ Its `[Languages]` block names 26 translations, four of which Inno Setup does not
 
 ## Output
 
-- One artifact per build, named `doublecmd-win64-r<REVISION>-<short-sha>`, holding the installer `.exe` and `changelog.txt`.
+- One artifact per build, named `doublecmd-win64-r<REVISION>-<short-sha>`, holding the installer `.exe` and `changelog.txt`. Observed: `doublecmd-win64-r13118-d7930a68`, containing `doublecmd-1.3.0.r13118.x86_64-win64.exe` at 11.7 MB.
 - `retention-days: 90` — GitHub's maximum, and the retention we want.
 - `compression-level: 0`; the installer is already LZMA-compressed.
 - Download requires a GitHub login. Accepted; the alternative (Releases, publicly downloadable) was rejected to avoid permanent clutter in the fork.

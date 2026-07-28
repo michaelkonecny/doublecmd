@@ -49,6 +49,18 @@ Inno Setup on `windows-latest`.
 
 Timing — Lazarus install through a finished x86_64 build: roughly 4 minutes.
 
+Caches do not cross operating systems.
+- Run 3 logged `Cache saved with key: fork-win-installer-d7930a68…` from the Windows build job; run 4
+  logged `Cache not found for input keys:` with a byte-identical key from the Linux check job.
+- The restore log spelled out the cause: `enableCrossOsArchive: false`.
+- Failure mode is silent and expensive: dedup never hits, so every cron tick rebuilds. Caught only
+  because a no-force dispatch was run deliberately to test the skip path.
+- Fixed by setting `enableCrossOsArchive: true` on both the save and the restore.
+- Alternatives considered: run `check` on Windows too (wasteful, slower startup), or replace the
+  cache with an Actions API query for an existing artifact of that SHA (more robust, but the artifact
+  name embeds the revision number that only the build job computes, so it would need suffix matching
+  and paging). The documented one-flag fix won on size.
+
 `shell: cmd` hides intermediate failures.
 - Only the last command's exit code reaches Actions, so every fallible command is followed by an
   explicit `if errorlevel 1 exit /b 1`, plus existence assertions on the built binary, the populated
