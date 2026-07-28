@@ -37,7 +37,10 @@ jobs:
       id: head
       run: |
         sha=$(git ls-remote "https://github.com/${{ github.repository }}" refs/heads/master | cut -f1)
-        test -n "$sha"
+        if [ -z "$sha" ]; then
+          echo "::error::${{ github.repository }} has no refs/heads/master - nothing to build"
+          exit 1
+        fi
         echo "sha=$sha" >> "$GITHUB_OUTPUT"
         echo "short=${sha:0:8}" >> "$GITHUB_OUTPUT"
 

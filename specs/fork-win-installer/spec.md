@@ -21,7 +21,7 @@ Keep a downloadable Windows installer of this fork's `master` in GitHub, built a
 
 Role: keep all fork-only CI on a branch that shares no history with `master`, so nothing can flow between them.
 
-- `master` — tracks upstream, carries only work intended for upstream PRs. Never contains this spec, this workflow, or any reference to them.
+- `master` — tracks upstream, carries only work intended for upstream PRs. Never contains this spec, this workflow, or any reference to them. Must exist on the fork's remote: it is the only ref this CI ever builds, and the fork having no `master` is a hard error rather than a no-op.
 - `fork-ci` — orphan branch (no common ancestor with `master`), holds exactly three files: this spec, `.github/workflows/fork-win-installer.yml`, and a short `README.md`. Set as the fork's default branch.
 - Never merged in either direction. The workflow reaches `master` by checking it out at build time, not by sharing history.
 
@@ -100,6 +100,7 @@ The topology makes leaking the CI setup into a PR structurally impossible rather
 
 ## Edge cases
 
+- Fork has no `refs/heads/master` → `check` job fails with an explicit `::error::`, not a bare exit code.
 - `master` unchanged since the last successful build → `check` job reports the skip in the run summary, `build` job does not start.
 - Cache marker evicted → one redundant rebuild, same artifact content.
 - Build fails → no marker saved, so the next tick retries the same SHA.
