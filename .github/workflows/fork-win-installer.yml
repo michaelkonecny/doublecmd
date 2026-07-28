@@ -10,7 +10,14 @@ name: fork-win-installer
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    # Off the top of the hour on purpose: minute 0 is the most contended slot in
+    # GitHub's scheduler and drifts or drops ticks under load.
+    - cron: '37 */2 * * *'
+    # TEMPORARY, remove once a schedule-triggered run has been observed. A newly
+    # registered cron can take up to an hour to be recognised, so this gives the
+    # trigger several chances to prove itself. Ticks skip the build while master
+    # is unchanged, so each one costs about twenty seconds.
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       force:

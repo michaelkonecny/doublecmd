@@ -35,7 +35,7 @@ Cost accepted: up to ~2 h latency between a `master` push and its installer, plu
 
 ## Trigger and deduplication
 
-- `schedule`: every 2 hours.
+- `schedule`: every 2 hours at minute 37. Minute 0 is the most contended slot in GitHub's scheduler and drifts or drops ticks under load; an arbitrary off-hour minute avoids the spike. Scheduling is best-effort either way, and a newly registered cron can take up to an hour before its first tick.
 - `workflow_dispatch`: manual, with a boolean `force` input that bypasses deduplication.
 - Deduplication: a `check` job resolves the current head of `master` via `git ls-remote` (no clone) and looks up an `actions/cache` entry keyed on that SHA. Cache hit and not forced → no build. The `build` job saves the marker on success, so only successful builds suppress later runs.
 - The marker crosses operating systems — written by the Windows build job, read by the Linux check job — so both the save and the restore set `enableCrossOsArchive: true`. Without it on both ends the key matches exactly and still misses, silently rebuilding every tick.

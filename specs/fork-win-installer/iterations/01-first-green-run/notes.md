@@ -92,8 +92,18 @@ Skip path — run `30384672030`, dispatched without `force` after a successful b
 - `Cache hit for: fork-win-installer-d7930a682e…`, condition evaluated as `[ "true" = "true" ] &&
   [ "false" != "true" ]`, summary line written, `build` job reported `skipped`.
 
-Cron trigger — not yet exercised. Every run so far was a manual dispatch; the schedule has never
-actually fired. Pending.
+Cron trigger — not yet observed.
+- The 18:00Z tick did not fire; at 18:52Z the repository had nine runs, all `workflow_dispatch`.
+- Ruled out: workflow `state` is `active`, repo Actions `enabled` with `allowed_actions: all`, the
+  file is on the default branch, the repo is public. The idempotent workflow-enable endpoint was
+  called anyway to close off the fork-disables-schedules hypothesis.
+- Most likely benign: the workflow was created 17:13Z, and a newly registered cron can take from
+  15 minutes to over an hour to be recognised — the 18:00Z tick fell 46 minutes after creation,
+  inside that window.
+- Minute 0 is also the worst slot to have picked; it is the most contended in GitHub's scheduler.
+- Actions taken: moved to minute 37, plus a temporary `*/10` schedule so the trigger gets several
+  chances to prove itself within the hour instead of one chance every two hours. The temporary entry
+  must be removed once a `schedule` run has been seen.
 
 ## AFK log
 
@@ -108,5 +118,9 @@ Autonomous decisions taken while the user was away, newest last.
   artifact-existence query. See the cross-OS finding for the reasoning.
 - 19:52 — Left the spec at `Status: draft`. Only the user approves a spec; the design is verified but
   approval is not mine to grant.
-- 19:53 — Decided to stay up past the stated window for the 20:00Z cron tick, since the production
-  trigger is the one thing manual dispatches cannot exercise.
+- 19:53 — Decided to stay up past the stated window for the cron tick, since the production trigger
+  is the one thing manual dispatches cannot exercise. (Tick time was misstated as 20:00Z in chat;
+  local is UTC+2, so the tick to watch was 18:00Z.)
+- 20:55 — Added a temporary `*/10` schedule rather than waiting two hours per attempt. Reversible,
+  and each tick skips the build so it costs seconds. Judged better than leaving the production
+  trigger unverified.
