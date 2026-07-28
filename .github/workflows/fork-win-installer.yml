@@ -115,13 +115,33 @@ jobs:
         copy install\windows\lib\%CPU_TARGET%\winpty-agent.exe .
         if exist install\windows\lib\%CPU_TARGET%\*.sfx copy install\windows\lib\%CPU_TARGET%\*.sfx .
 
+    - name: Install Inno Setup
+      shell: pwsh
+      run: |
+        $inno = "${env:ProgramFiles(x86)}\Inno Setup 6"
+        $iscc = "$inno\ISCC.exe"
+        # Preinstalled on windows-2022, absent on windows-2025
+        if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+        if (-not (Test-Path $iscc)) { throw "Inno Setup did not install" }
+        "ISCC=$iscc" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+        # doublecmd.iss names translations that Inno Setup does not bundle (Greek,
+        # Nepali, SerbianCyrillic, SerbianLatin as of now). Upstream's build box has
+        # them installed by hand; a runner needs them fetched. Resolved from the
+        # script rather than hardcoded, so a new language upstream can't break us.
+        $base = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial"
+        $wanted = Select-String -Path install\windows\doublecmd.iss `
+          -Pattern 'compiler:Languages\\([A-Za-z]+\.islu?)' -AllMatches |
+          ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object -Unique
+        foreach ($name in $wanted) {
+          if (Test-Path "$inno\Languages\$name") { continue }
+          Write-Host "fetching unofficial translation $name"
+          Invoke-WebRequest -Uri "$base/$name" -OutFile "$inno\Languages\$name"
+        }
+
     - name: Build the installer
       shell: cmd
       run: |
-        set ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe
-        rem Preinstalled on windows-2022, absent on windows-2025
-        if not exist "%ISCC%" choco install innosetup -y --no-progress
-        if not exist "%ISCC%" exit /b 1
         rem install.bat fills %BUILD_PACK_DIR%\doublecmd, which is what doublecmd.iss packs
         set BUILD_PACK_DIR=%RUNNER_TEMP%\pack
         mkdir %BUILD_PACK_DIR%

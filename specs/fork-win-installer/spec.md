@@ -53,9 +53,10 @@ Steps, mirroring `.github/scripts/create_snapshot.bat` up to the point where it 
 4. Download `windows.7z` from `doublecmd/external` into `install/`, extract, delete the archive.
 5. Read version from `src/doublecmd.lpi`; run `src/platform/git2revisioninc.exe.cmd` for the revision; export `DC_VER` and `REVISION` via `GITHUB_ENV`.
 6. `build.bat darkwin` with `CPU_TARGET=x86_64`, `OS_TARGET=win64`; copy the DLLs, `winpty-agent.exe`, and any `*.sfx` from `install/windows/lib/x86_64/` next to the binary.
-7. `install/windows/install.bat` populates `%BUILD_PACK_DIR%\doublecmd`, the tree `doublecmd.iss` packs.
-8. Copy `doublecmd.iss` next to that tree and run `ISCC` with `/F"doublecmd-<DC_VER>.r<REVISION>.x86_64-win64"` and `/DDisplayVersion=<DC_VER>`.
-9. Move the `.exe` plus a 10-entry `changelog.txt` into `out/`.
+7. Ensure Inno Setup and every translation `doublecmd.iss` asks for are present — see Inno Setup.
+8. `install/windows/install.bat` populates `%BUILD_PACK_DIR%\doublecmd`, the tree `doublecmd.iss` packs.
+9. Copy `doublecmd.iss` next to that tree and run `ISCC` with `/F"doublecmd-<DC_VER>.r<REVISION>.x86_64-win64"` and `/DDisplayVersion=<DC_VER>`.
+10. Move the `.exe` plus a 10-entry `changelog.txt` into `out/`.
 
 Installer logic is inlined in the workflow rather than added as a `.github/scripts/*.bat` file, so the fork-only footprint on the build side is exactly one file.
 
@@ -63,7 +64,11 @@ Installer logic is inlined in the workflow rather than added as a `.github/scrip
 
 `ISCC.exe` is expected at `%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe`; if absent, the workflow installs it with `choco install innosetup -y --no-progress`. This covers both current runner images — `windows-2022` ships Inno Setup 6.4.0, `windows-2025` ships none — and survives future image changes without edits.
 
-`install/windows/doublecmd.iss` is documented as an Inno Setup 5 script. It is expected to compile under 6 (`{pf}` is deprecated but still supported). Unverified until the first green run — see Follow-ups.
+`install/windows/doublecmd.iss` is documented as an Inno Setup 5 script; 6.7.1 parses it (the deprecated `{pf}` constant is still accepted).
+
+Its `[Languages]` block names 26 translations, four of which Inno Setup does not bundle — Greek, Nepali, SerbianCyrillic, SerbianLatin — and a missing one is a hard compile error, not a warning. Upstream's build machine has them installed by hand; a clean runner does not. The workflow therefore parses the `compiler:Languages\*.isl[u]` references out of `doublecmd.iss` and fetches whatever is absent from `jrsoftware/issrc` under `Files/Languages/Unofficial`. Derived from the script rather than hardcoded, so upstream adding a 27th language cannot break the build.
+
+`doublecmd.iss` itself is never patched — that would put a fork-only change on `master`.
 
 ### Failure detection
 
@@ -111,8 +116,7 @@ The topology makes leaking the CI setup into a PR structurally impossible rather
 
 ## Follow-ups
 
-- Confirm `doublecmd.iss` compiles under Inno Setup 6 on the first run; if the deprecated `{pf}` constant is rejected, patch it on `fork-ci` — never on `master`.
-- Consider tightening the cron once real build duration is known.
+- Consider tightening the cron once real build duration is known. First observed timing: Lazarus install through a finished x86_64 build in roughly 4 minutes.
 - Consider adding the `.7z` portable if a no-install build turns out to be wanted.
 
 ## Out of scope
